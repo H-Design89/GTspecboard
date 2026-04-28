@@ -1,0 +1,39 @@
+=========================================================
+      HƯỚNG DẪN CẬP NHẬT MÃ NGUỒN (CODE) LÊN GITHUB
+=========================================================
+
+Mỗi khi bạn có chỉnh sửa code (thêm tính năng mới, sửa lỗi, cập nhật giao diện, v.v.), hãy làm theo đúng 3 bước cơ bản sau để lưu lại và đồng bộ bản mới nhất lên GitHub.
+
+BƯỚC 1: CHỌN CÁC FILE ĐÃ THAY ĐỔI
+- Mở Terminal (ngay trong VS Code hoặc mở PowerShell tại thư mục dự án)
+- Gõ lệnh sau và nhấn Enter:
+
+  git add .
+
+(Lưu ý: Có dấu cách và dấu chấm "." ở cuối, ý nghĩa là "chọn tất cả các file vừa được thay đổi").
+
+
+BƯỚC 2: LƯU LẠI THAY ĐỔI KÈM GHI CHÚ (COMMIT)
+- Gõ lệnh sau và nhấn Enter (thay nội dung trong ngoặc kép bằng ghi chú thực tế của bạn để sau này dễ quản lý):
+
+  git commit -m "Ví dụ: Cập nhật giao diện trang chủ"
+
+
+BƯỚC 3: ĐẨY CODE LÊN GITHUB (PUSH)
+- Sau khi đã lưu ở Bước 2, để đồng bộ lên mạng, gõ lệnh sau và nhấn Enter:
+
+  git push
+
+- Chờ một chút để code tải lên. Khi lệnh chạy xong, bạn có thể lên trang GitHub của mình để kiểm tra bản cập nhật.
+
+=========================================================
+MỘT SỐ LỆNH HỮU ÍCH KHÁC TRONG QUÁ TRÌNH LÀM VIỆC:
+
+- Kiem tra tinh trang: 
+  git status
+  (Dùng để xem file nào đã sửa, file nào chưa được add...)
+
+- Xem lich su luu trữ:
+  git log
+  (Dùng để xem lại toàn bộ các lần đã commit trước đó)
+=========================================================
