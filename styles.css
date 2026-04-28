@@ -1,0 +1,421 @@
+:root { 
+    --primary: #1a73e8; 
+    --secondary: #004ba0; 
+    --accent: #d93025; 
+    --bg: #f1f3f4; 
+    --card: #ffffff; 
+    --success: #0f9d58;
+    --tab-bg: #e8f0fe; 
+    --tab-active: #ffffff;
+    --text-primary: #3c4043;
+    --text-secondary: #5f6368;
+    --border-color: #dadce0;
+}
+
+body { 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+    background: var(--bg); 
+    margin: 0; 
+    padding: 10px; 
+    color: var(--text-primary); 
+}
+
+.container { 
+    max-width: 1400px; 
+    margin: auto; 
+}
+
+/* === MÀN HÌNH KHÓA PIN (DRM) === */
+#lock-screen { 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background: rgba(236, 239, 241, 0.95);
+    backdrop-filter: blur(5px);
+    z-index: 9999; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+}
+
+.lock-box { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 12px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+    text-align: center; 
+    width: 300px; 
+    border-top: 5px solid var(--primary); 
+    transition: all 0.3s ease; 
+}
+
+.lock-box.master-mode { 
+    border-top: 5px solid var(--accent); 
+}
+
+.lock-box img { 
+    height: 60px; 
+    margin-bottom: 10px; 
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+    padding: 3px; 
+    background: white; 
+}
+
+.lock-box h3 {
+    color: var(--secondary);
+    margin: 0;
+}
+
+.lock-box input { 
+    width: 100%; 
+    padding: 15px; 
+    margin: 15px 0; 
+    font-size: 1.5rem; 
+    text-align: center; 
+    letter-spacing: 5px; 
+    border: 2px solid var(--border-color); 
+    border-radius: 8px; 
+    outline: none; 
+    font-weight: bold;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.lock-box input:focus { 
+    border-color: var(--primary); 
+}
+
+.btn-unlock { 
+    width: 100%; 
+    padding: 15px; 
+    background: var(--primary); 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    cursor: pointer; 
+    transition: background-color 0.3s, transform 0.1s; 
+}
+
+.btn-unlock:hover { 
+    background: var(--secondary); 
+}
+
+.btn-unlock:active {
+    transform: scale(0.98);
+}
+
+.btn-master { 
+    background: var(--accent); 
+}
+
+.btn-master:hover {
+    background: #b3261d;
+}
+
+.pin-hint { 
+    background: var(--tab-bg); 
+    color: var(--primary); 
+    padding: 8px; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    font-size: 1.2rem; 
+    letter-spacing: 2px; 
+    border: 1px dashed var(--primary); 
+    display: inline-block; 
+    margin-top: 10px; 
+}
+
+#main-app { 
+    display: none; 
+}
+
+/* HEADER VÀ TABS */
+.header { 
+    background: var(--secondary); 
+    color: white; 
+    padding: 15px 10px 0 10px; 
+    text-align: center; 
+    border-radius: 12px 12px 0 0; 
+    margin-bottom: 0; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+}
+
+.header-title-container { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 15px; 
+    margin-bottom: 15px; 
+}
+
+.header h2 { 
+    margin: 0; 
+    font-size: 1.6rem; 
+    letter-spacing: 1px; 
+    text-transform: uppercase; 
+    font-weight: bold; 
+}
+
+.logo-top { 
+    height: 45px; 
+    background: white; 
+    border-radius: 8px; 
+    padding: 3px; 
+}
+
+.nav-tabs { 
+    display: flex; 
+    justify-content: center; 
+    gap: 4px; 
+    background: rgba(0,0,0,0.2); 
+    padding: 8px 8px 0 8px; 
+    border-radius: 8px 8px 0 0; 
+}
+
+.nav-tab { 
+    background: var(--tab-bg); 
+    color: var(--secondary); 
+    border: none; 
+    padding: 12px 20px; 
+    font-weight: bold; 
+    font-size: 0.95rem; 
+    cursor: pointer; 
+    border-radius: 8px 8px 0 0; 
+    transition: all 0.3s; 
+    flex: 1; 
+    max-width: 300px; 
+    text-transform: uppercase; 
+}
+
+.nav-tab:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.nav-tab.active { 
+    background: var(--tab-active); 
+    color: var(--primary); 
+    border-bottom: 3px solid var(--primary); 
+}
+
+.app-page { 
+    display: none; 
+    animation: fadeIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); 
+    padding-top: 20px; 
+}
+
+.app-page.active { 
+    display: block; 
+}
+
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(15px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+/* KHUNG CHỨA VÀ LƯỚI BỘ LỌC */
+.card-panel { 
+    background: var(--card); 
+    border-radius: 12px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+    padding: 25px; 
+    border-top: 5px solid var(--primary); 
+    margin-bottom: 20px; 
+}
+
+.section-title { 
+    font-weight: bold; 
+    color: var(--secondary); 
+    margin-bottom: 20px; 
+    display: flex; 
+    align-items: center; 
+    font-size: 1.1rem; 
+    border-bottom: 2px solid #e0e0e0; 
+    padding-bottom: 8px; 
+    text-transform: uppercase; 
+}
+
+.grid-filter { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+    gap: 15px; 
+    margin-bottom: 15px; 
+}
+
+.filter-highlight-evap {
+    background: #e3f2fd; 
+    padding: 15px; 
+    border-radius: 8px;
+}
+
+.filter-highlight-cond {
+    background: #fff3e0; 
+    padding: 15px; 
+    border-radius: 8px;
+}
+
+.input-group { 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.input-group label { 
+    margin-bottom: 5px; 
+    font-weight: 600; 
+    font-size: 0.8rem; 
+    color: var(--text-secondary); 
+    text-transform: uppercase; 
+}
+
+.label-secondary { color: var(--secondary) !important; }
+.label-warning { color: #e65100 !important; }
+
+input, select { 
+    padding: 10px; 
+    border: 1px solid var(--border-color); 
+    border-radius: 6px; 
+    font-size: 0.9rem; 
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+input:focus, select:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+}
+
+.input-bold-secondary {
+    font-weight: bold;
+    border-color: var(--secondary);
+}
+
+.input-warning {
+    border-color: #ff9800;
+}
+
+::placeholder { 
+    color: #aaa; 
+    font-style: italic; 
+}
+
+.btn-search { 
+    width: 100%; 
+    padding: 15px; 
+    background: var(--primary); 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    cursor: pointer; 
+    text-transform: uppercase; 
+    margin-top: 10px; 
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-search:hover {
+    background: var(--secondary);
+}
+
+.btn-search:active {
+    transform: scale(0.99);
+}
+
+.btn-search-warning {
+    background: #e65100;
+}
+
+.btn-search-warning:hover {
+    background: #bf360c;
+}
+
+/* BẢNG KẾT QUẢ */
+.table-responsive { 
+    overflow-x: auto; 
+    background: white; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+    margin-bottom: 20px;
+}
+
+.result-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 0.9rem; 
+    text-align: center; 
+}
+
+.result-table th { 
+    background: var(--secondary); 
+    color: white; 
+    padding: 14px 8px; 
+    border: 1px solid #ddd; 
+    font-weight: bold; 
+    white-space: nowrap; 
+}
+
+.result-table td { 
+    padding: 12px 8px; 
+    border: 1px solid #ddd; 
+    vertical-align: middle; 
+}
+
+.result-table tr {
+    transition: background-color 0.2s;
+}
+
+.result-table tr:nth-child(even) { 
+    background: #f8f9fa; 
+}
+
+.result-table tr:hover { 
+    background: var(--tab-bg); 
+}
+
+.highlight { 
+    font-weight: bold; 
+    color: var(--primary); 
+    text-align: left; 
+}
+
+.val-success {
+    color: var(--success);
+    font-weight: bold;
+}
+
+.val-warning {
+    color: #e65100;
+    font-weight: bold;
+}
+
+.val-bold {
+    font-weight: bold;
+}
+
+.val-id {
+    font-family: monospace;
+    color: #7f8c8d;
+}
+
+.no-data { 
+    padding: 40px; 
+    color: var(--accent); 
+    font-weight: bold; 
+    font-style: italic; 
+    font-size: 1.1rem; 
+}
+
+.no-data-warning {
+    color: #e65100;
+}
+
+.footer { 
+    text-align: center; 
+    padding: 15px; 
+    font-style: italic; 
+    color: var(--text-secondary); 
+    font-size: 0.85rem; 
+}

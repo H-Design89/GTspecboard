@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GT-SpecBoard | Hệ Thống Tra Cứu Model</title>
+    <link rel="icon" href="logo_gt.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div id="lock-screen">
+        <div class="lock-box" id="lock-box-container">
+            <img src="logo_gt.png" alt="GT Logo" onerror="this.style.display='none'">
+            <h3 id="lock-title">GT-SPECBOARD SECURE</h3>
+            <div id="ui-regular-pin">
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Mã PIN:
+                </p>
+                <div class="pin-hint" id="pin-hint-display">TL - ****</div>
+                <input type="password" id="pin-input" placeholder="* * * *" maxlength="4">
+                <button class="btn-unlock" onclick="checkRegularPIN()">ĐĂNG NHẬP</button>
+                <p id="pin-error" style="color: red; font-size: 0.85rem; display: none; margin-top: 10px;">Mã PIN không
+                    chính xác!</p>
+            </div>
+            <div id="ui-master-key" style="display: none;">
+                <p style="color: var(--accent); font-weight: bold; font-size: 0.9rem; margin-top: 10px;">ĐÃ HẾT HẠN SỬ
+                    DỤNG 30 NGÀY!</p>
+                <input type="password" id="master-input" placeholder="MASTER KEY" maxlength="8">
+                <button class="btn-unlock btn-master" onclick="checkMasterKey()">KÍCH HOẠT LẠI</button>
+                <p id="master-error" style="color: red; font-size: 0.85rem; display: none; margin-top: 10px;">Master Key
+                    không hợp lệ!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="container">
+            <div class="header">
+                <div class="header-title-container">
+                    <img src="logo_gt.png" class="logo-top" alt="GT Logo" onerror="this.style.display='none'">
+                    <h2>GT-SPECBOARD MASTER</h2>
+                </div>
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchTab('evap', this)">AIR COOLER</button>
+                    <button class="nav-tab" onclick="switchTab('cond', this)">CONDENSER</button>
+                    <button class="nav-tab" onclick="switchTab('admin', this)"
+                        style="background: #e0f7fa; color: #006064;">SYSTEM ADMIN</button>
+                </div>
+            </div>
+
+            <div id="page-evap" class="app-page active">
+                <div class="card-panel">
+                    <div class="section-title">BỘ LỌC THÔNG SỐ - THIẾT BỊ BAY HƠI</div>
+                    <div class="grid-filter">
+                        <div class="input-group"><label>Loại thiết bị:</label><select id="f_dan">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                        <div class="input-group"><label>PP Vận hành:</label><select id="f_vh">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                        <div class="input-group"><label>Môi chất:</label><select id="f_mc">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                        <div class="input-group"><label>Loại ống & Khuôn:</label><select id="f_ong">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                        <div class="input-group"><label>Cánh tản nhiệt:</label><select id="f_canh">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                    </div>
+                    <div class="grid-filter">
+                        <div class="input-group"><label>Te (°C):</label><input type="number" id="f_te"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Tr (°C):</label><input type="number" id="f_tr"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Delta T (K):</label><input type="number" id="f_dt"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Quạt (Ø mm):</label><input type="number" id="f_q_dk"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>SL Quạt:</label><input type="number" id="f_q_sl"
+                                placeholder="-All-"></div>
+                    </div>
+                    <div class="grid-filter filter-highlight-evap">
+                        <div class="input-group"><label class="label-secondary">Công suất (kW):</label><input
+                                type="number" id="f_kw" value="15.6" class="input-bold-secondary"></div>
+                        <div class="input-group"><label class="label-secondary">Sai số (+/- %):</label><input
+                                type="number" id="f_tol" value="10" class="input-bold-secondary"></div>
+                        <div class="input-group"><label>DTTĐN (m2):</label><input type="number" id="f_s"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Tiêu chuẩn (m2/kW):</label><input type="number" id="f_tc"
+                                placeholder="-All-"></div>
+                    </div>
+                    <button class="btn-search" onclick="performSearchEvap()">🔍 QUÉT DỮ LIỆU HỆ THỐNG</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Công suất (kW)</th>
+                                <th>DTTĐN (m2)</th>
+                                <th>TC (m2/kW)</th>
+                                <th>DT (K)</th>
+                                <th>Te (°C)</th>
+                                <th>Tr (°C)</th>
+                                <th>Môi chất</th>
+                                <th>Vận hành</th>
+                                <th>Gió (m/s)</th>
+                                <th>Mã ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-evap">
+                            <tr>
+                                <td colspan="11" class="no-data">Nhấn nút "Quét dữ liệu" để hiển thị</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="page-cond" class="app-page">
+                <div class="card-panel">
+                    <div class="section-title">BỘ LỌC THÔNG SỐ - DÀN NGƯNG TỤ</div>
+                    <div class="grid-filter">
+                        <div class="input-group"><label>Loại thiết bị:</label><select id="f_dan_c">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                        <div class="input-group"><label>Môi chất:</label><select id="f_mc_c">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                        <div class="input-group"><label>Loại ống & Khuôn:</label><select id="f_ong_c">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                        <div class="input-group"><label>Cánh tản nhiệt:</label><select id="f_canh_c">
+                                <option value="ALL">-All-</option>
+                            </select></div>
+                    </div>
+                    <div class="grid-filter">
+                        <div class="input-group"><label>Te (°C):</label><input type="number" id="f_te_c"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Tr (°C):</label><input type="number" id="f_tr_c"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Tc (°C):</label><input type="number" id="f_tc_cond"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Twb (°C):</label><input type="number" id="f_twb"
+                                placeholder="-All-"></div>
+                        <div class="input-group"><label>Quạt (Ø mm):</label><input type="number" id="f_q_dk_c"
+                                placeholder="-All-"></div>
+                    </div>
+                    <div class="grid-filter filter-highlight-cond">
+                        <div class="input-group"><label class="label-warning">Công suất (kW):</label><input
+                                type="number" id="f_kw_c" placeholder="-All-" class="input-warning"></div>
+                        <div class="input-group"><label class="label-warning">Sai số (+/- %):</label><input
+                                type="number" id="f_tol_c" value="10" class="input-warning"></div>
+                        <div class="input-group"><label class="label-warning">Công suất máy (HP):</label><input
+                                type="number" id="f_hp_c" placeholder="-All-" class="input-warning"></div>
+                        <div class="input-group"><label>DTTĐN (m2):</label><input type="number" id="f_s_c"
+                                placeholder="-All-"></div>
+                    </div>
+                    <button class="btn-search btn-search-warning" onclick="performSearchCond()">🔍 QUÉT DỮ LIỆU HỆ
+                        THỐNG</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Công suất (kW)</th>
+                                <th>CS Máy (HP)</th>
+                                <th>DTTĐN (m2)</th>
+                                <th>TC (m2/kW)</th>
+                                <th>Te (°C)</th>
+                                <th>Tr (°C)</th>
+                                <th>Tc (°C)</th>
+                                <th>Twb (°C)</th>
+                                <th>Môi chất</th>
+                                <th>Tốc độ gió</th>
+                                <th>Mã ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-cond">
+                            <tr>
+                                <td colspan="12" class="no-data no-data-warning">Nhấn nút "Quét dữ liệu" để hiển thị
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="page-admin" class="app-page">
+                <div id="admin-login" class="card-panel"
+                    style="max-width: 400px; margin: 40px auto; text-align: center;">
+                    <div class="section-title" style="justify-content: center; color: var(--accent);">ĐĂNG NHẬP QUẢN TRỊ
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="admin-id" placeholder="Tên đăng nhập (ID)"
+                            style="margin-bottom: 10px; text-align: center;">
+                        <input type="password" id="admin-pass" placeholder="Mật khẩu"
+                            style="margin-bottom: 10px; text-align: center;">
+                        <button class="btn-search btn-search-warning" onclick="loginAdmin()">ĐĂNG NHẬP</button>
+                        <p id="admin-error" style="color: red; font-size: 0.85rem; display: none; margin-top: 10px;">ID
+                            hoặc Mật khẩu không đúng!</p>
+                    </div>
+                </div>
+
+                <div id="admin-dashboard" style="display: none;">
+                    <div class="card-panel">
+                        <div class="section-title" style="display: flex; justify-content: space-between;">
+                            <span>QUẢN LÝ DỮ LIỆU MODEL</span>
+                            <select id="admin-db-select" onchange="changeAdminDb()"
+                                style="padding: 5px; font-weight: bold; width: auto;">
+                                <option value="evap">Dàn Bay Hơi (data.js)</option>
+                                <option value="cond">Dàn Ngưng Tụ (data_01.js)</option>
+                            </select>
+                        </div>
+
+                        <details id="admin-pin-manager"
+                            style="background: #fff3e0; padding: 15px; border-radius: 8px; border: 1px dashed #ff9800; margin-bottom: 20px;">
+                            <summary style="color: #e65100; font-weight: bold; font-size: 1.1rem; cursor: pointer;">ĐỔI
+                                MÃ PIN HIỆN TẠI</summary>
+                            <div class="grid-filter" style="align-items: end; margin-bottom: 0; margin-top: 15px;">
+                                <div class="input-group">
+                                    <label style="color: #e65100;">Chọn Vòng lặp PIN:</label>
+                                    <select id="admin-pin-select"
+                                        style="border-color: #ff9800; font-weight: bold;"></select>
+                                </div>
+                                <div class="input-group">
+                                    <label style="color: #e65100;">Xác thực Master Key:</label>
+                                    <input type="password" id="admin-pin-masterkey" placeholder="Nhập Master Key"
+                                        style="border-color: #ff9800;">
+                                </div>
+                                <button class="btn-search btn-search-warning" style="margin-top: 0; padding: 11px;"
+                                    onclick="applyManualPinChange()">🔄 ĐỔI PIN NGAY</button>
+                            </div>
+                        </details>
+
+                        <div id="admin-form-container"
+                            style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 20px;">
+                            <h4 style="margin-top: 0; color: var(--primary);" id="admin-form-title">THÊM MỚI MODEL</h4>
+                            <div id="admin-dynamic-form" class="grid-filter"></div>
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button class="btn-search" style="margin-top: 0; flex: 1;" onclick="saveAdminModel()">💾
+                                    LƯU VÀO BỘ NHỚ</button>
+                                <button class="btn-search" style="margin-top: 0; flex: 1; background: #7f8c8d;"
+                                    onclick="resetAdminForm()">✖ HỦY / TẠO MỚI</button>
+                            </div>
+                        </div>
+
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="margin: 0;">DANH SÁCH THIẾT BỊ <span id="admin-db-count"
+                                    style="color: var(--secondary);">(0)</span></h4>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-search"
+                                    style="width: auto; padding: 10px 20px; background: #1d6f42; margin: 0;"
+                                    onclick="exportExcel()">📊 XUẤT EXCEL</button>
+                                <button class="btn-search"
+                                    style="width: auto; padding: 10px 20px; background: var(--success); margin: 0;"
+                                    onclick="exportCurrentDb()">⬇ TẢI FILE DỮ LIỆU JS</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                            <table class="result-table">
+                                <thead id="admin-table-head"></thead>
+                                <tbody id="admin-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                Solution by <b>H-DESIGN</b> | GIA THINH HEAT EXCHANGE EQUIPMENT PRODUCTION CO.,LTD © 2026
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="data_01.js"></script>
+    <script src="security.js"></script>
+    <script src="app.js"></script>
+    <script src="admin.js"></script>
+
+</body>
+
+</html>
