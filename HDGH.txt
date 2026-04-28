@@ -36,4 +36,27 @@ MỘT SỐ LỆNH HỮU ÍCH KHÁC TRONG QUÁ TRÌNH LÀM VIỆC:
 - Xem lich su luu trữ:
   git log
   (Dùng để xem lại toàn bộ các lần đã commit trước đó)
+
+=========================================================
+KHI LÀM VIỆC TRÊN LAPTOP KHÁC (ĐỒNG BỘ CODE):
+
+Vì code đã được đẩy (push) lên GitHub, nên nó được lưu trữ an toàn trên mạng. Khi bạn dùng một laptop khác, bạn chỉ cần tải về là có đầy đủ các thay đổi.
+
+🔴 YÊU CẦU CẦN CÓ TRÊN LAPTOP MỚI:
+1. Cài đặt phần mềm "Git" (tải tại: https://git-scm.com) để chạy được các lệnh tải/đẩy code.
+2. Cài đặt "Visual Studio Code" để mở và chỉnh sửa dự án.
+3. Lần đầu tiên sử dụng máy đó, hãy chạy 2 lệnh này trong Terminal để hệ thống nhận diện bạn:
+   git config --global user.email "4bgoat@gmail.com"
+   git config --global user.name "H-Design89"
+
+🟢 CÁCH ĐỒNG BỘ CODE VỀ MÁY:
+Trường hợp 1: Laptop kia chưa có code
+- Mở Terminal/PowerShell tại thư mục bạn muốn lưu dự án.
+- Gõ lệnh tải toàn bộ dự án về:
+  git clone https://github.com/H-Design89/GTspecboard.git
+
+Trường hợp 2: Laptop kia đã có sẵn thư mục dự án từ trước
+- Mở Terminal/PowerShell bên trong thư mục dự án đó.
+- Gõ lệnh để kéo bản cập nhật mới nhất từ GitHub về máy:
+  git pull
 =========================================================
