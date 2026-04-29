@@ -5,16 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GT-SpecBoard | Hệ Thống Tra Cứu Model</title>
-    
+
     <!-- Icon mặc định của web -->
     <link rel="icon" href="logo_gt.png" type="image/png">
-    
+
     <!-- Hỗ trợ hiển thị Icon trên màn hình chính của iPhone/iPad (iOS) -->
     <link rel="apple-touch-icon" href="logo_gt.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="GT-SpecBoard">
-    
+
     <!-- Hỗ trợ Android (tùy chọn thêm để mượt hơn) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1a1a2e">
@@ -49,17 +49,19 @@
     </div>
 
     <div id="main-app">
-        <div class="container">
+        <div class="app-container">
+            <!-- HEADER VÀ CHUYỂN TRANG -->
             <div class="header">
-                <div class="header-title-container">
+                <div class="header-title-container" style="position: relative;">
                     <img src="logo_gt.png" class="logo-top" alt="GT Logo" onerror="this.style.display='none'">
                     <h2>GT-SPECBOARD MASTER</h2>
+                    <button id="theme-toggle" onclick="toggleTheme()" style="position: absolute; right: 0; top: 0; background: none; border: none; color: white; font-size: 24px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🌙</button>
                 </div>
                 <div class="nav-tabs">
-                    <button class="nav-tab active" onclick="switchTab('evap', this)">AIR COOLER</button>
+                    <button class="nav-tab active" onclick="switchTab('evap', this)">DÀN BAY HƠI (AIR COOLER)</button>
                     <button class="nav-tab" onclick="switchTab('cond', this)">CONDENSER</button>
-                    <button class="nav-tab" onclick="switchTab('admin', this)"
-                        style="background: #e0f7fa; color: #006064;">SYSTEM ADMIN</button>
+                    <button class="nav-tab" id="admin-tab-btn" onclick="switchTab('admin', this)"
+                        style="display: none;">SYSTEM ADMIN</button>
                 </div>
             </div>
 
@@ -92,12 +94,13 @@
                                 placeholder="-All-"></div>
                         <div class="input-group"><label>Quạt (Ø mm):</label><input type="number" id="f_q_dk"
                                 placeholder="-All-"></div>
-                        <div class="input-group"><label>SL Quạt:</label><input type="number" id="f_q_sl"
-                                placeholder="-All-"></div>
+                        <div class="input-group"><label style="color: var(--primary);">MÃ ID:</label><input
+                                type="text" id="f_id_prefix" placeholder="-Nhập chữ-" list="dl_id_prefix"
+                                style="border-color: var(--primary); font-weight: bold;"></div>
                     </div>
                     <div class="grid-filter filter-highlight-evap">
                         <div class="input-group"><label class="label-secondary">Công suất (kW):</label><input
-                                type="number" id="f_kw" value="15.6" class="input-bold-secondary"></div>
+                                type="number" id="f_kw" placeholder="-All-" class="input-bold-secondary"></div>
                         <div class="input-group"><label class="label-secondary">Sai số (+/- %):</label><input
                                 type="number" id="f_tol" value="10" class="input-bold-secondary"></div>
                         <div class="input-group"><label>DTTĐN (m2):</label><input type="number" id="f_s"
@@ -112,22 +115,23 @@
                     <table class="result-table">
                         <thead>
                             <tr>
-                                <th>Model</th>
-                                <th>Công suất (kW)</th>
-                                <th>DTTĐN (m2)</th>
-                                <th>TC (m2/kW)</th>
-                                <th>DT (K)</th>
-                                <th>Te (°C)</th>
-                                <th>Tr (°C)</th>
+                                <th style="width: 40px;"></th>
+                                <th data-sort="model" onclick="sortTable('evap', 'model')">MODEL ↕️</th>
+                                <th data-sort="kw" onclick="sortTable('evap', 'kw')">Công suất<br>(kW) ↕️</th>
+                                <th data-sort="s_tdn" onclick="sortTable('evap', 's_tdn')">DTTĐN<br>(m2) ↕️</th>
+                                <th data-sort="tieu_chuan" onclick="sortTable('evap', 'tieu_chuan')">Tiêu chuẩn<br>(m2/kW) ↕️</th>
+                                <th data-sort="delta_t" onclick="sortTable('evap', 'delta_t')">Delta T<br>(K) ↕️</th>
+                                <th data-sort="t_bayhoi" onclick="sortTable('evap', 't_bayhoi')">Te<br>(°C) ↕️</th>
+                                <th data-sort="t_phong" onclick="sortTable('evap', 't_phong')">Tr<br>(°C) ↕️</th>
                                 <th>Môi chất</th>
                                 <th>Vận hành</th>
-                                <th>Gió (m/s)</th>
-                                <th>Mã ID</th>
+                                <th data-sort="v_wind" onclick="sortTable('evap', 'v_wind')">Tốc độ gió<br>(m/s) ↕️</th>
+                                <th data-sort="id" onclick="sortTable('evap', 'id')">MÃ ID ↕️</th>
                             </tr>
                         </thead>
                         <tbody id="result-evap">
                             <tr>
-                                <td colspan="11" class="no-data">Nhấn nút "Quét dữ liệu" để hiển thị</td>
+                                <td colspan="12" class="no-data">Bấm "Quét Dữ Liệu Hệ Thống" để bắt đầu...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -162,6 +166,9 @@
                                 placeholder="-All-"></div>
                         <div class="input-group"><label>Quạt (Ø mm):</label><input type="number" id="f_q_dk_c"
                                 placeholder="-All-"></div>
+                        <div class="input-group"><label style="color: var(--primary);">MÃ ID:</label><input
+                                type="text" id="f_id_prefix_c" placeholder="-Nhập chữ-" list="dl_id_prefix"
+                                style="border-color: var(--primary); font-weight: bold;"></div>
                     </div>
                     <div class="grid-filter filter-highlight-cond">
                         <div class="input-group"><label class="label-warning">Công suất (kW):</label><input
@@ -181,24 +188,24 @@
                     <table class="result-table">
                         <thead>
                             <tr>
-                                <th>Model</th>
-                                <th>Công suất (kW)</th>
-                                <th>CS Máy (HP)</th>
-                                <th>DTTĐN (m2)</th>
-                                <th>TC (m2/kW)</th>
-                                <th>Te (°C)</th>
-                                <th>Tr (°C)</th>
-                                <th>Tc (°C)</th>
-                                <th>Twb (°C)</th>
+                                <th style="width: 40px;"></th>
+                                <th data-sort="model" onclick="sortTable('cond', 'model')">MODEL ↕️</th>
+                                <th data-sort="kw" onclick="sortTable('cond', 'kw')">Công suất<br>(kW) ↕️</th>
+                                <th data-sort="hp" onclick="sortTable('cond', 'hp')">CS Máy<br>(HP) ↕️</th>
+                                <th data-sort="s_tdn" onclick="sortTable('cond', 's_tdn')">DTTĐN<br>(m2) ↕️</th>
+                                <th data-sort="tieu_chuan" onclick="sortTable('cond', 'tieu_chuan')">Tiêu chuẩn<br>(m2/kW) ↕️</th>
+                                <th data-sort="t_bayhoi" onclick="sortTable('cond', 't_bayhoi')">Te<br>(°C) ↕️</th>
+                                <th data-sort="t_phong" onclick="sortTable('cond', 't_phong')">Tr<br>(°C) ↕️</th>
+                                <th data-sort="t_ngungtu" onclick="sortTable('cond', 't_ngungtu')">Tc<br>(°C) ↕️</th>
+                                <th data-sort="t_wb" onclick="sortTable('cond', 't_wb')">Twb<br>(°C) ↕️</th>
                                 <th>Môi chất</th>
-                                <th>Tốc độ gió</th>
-                                <th>Mã ID</th>
+                                <th data-sort="v_wind" onclick="sortTable('cond', 'v_wind')">Tốc độ gió<br>(m/s) ↕️</th>
+                                <th data-sort="id" onclick="sortTable('cond', 'id')">MÃ ID ↕️</th>
                             </tr>
                         </thead>
                         <tbody id="result-cond">
                             <tr>
-                                <td colspan="12" class="no-data no-data-warning">Nhấn nút "Quét dữ liệu" để hiển thị
-                                </td>
+                                <td colspan="13" class="no-data no-data-warning">Bấm "Quét Dữ Liệu Hệ Thống" để bắt đầu...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -221,48 +228,170 @@
                     </div>
                 </div>
 
-                <div id="admin-dashboard" style="display: none;">
-                    <div class="card-panel">
-                        <div class="section-title" style="display: flex; justify-content: space-between;">
-                            <span>QUẢN LÝ DỮ LIỆU MODEL</span>
-                            <select id="admin-db-select" onchange="changeAdminDb()"
-                                style="padding: 5px; font-weight: bold; width: auto;">
-                                <option value="evap">Dàn Bay Hơi (data.js)</option>
-                                <option value="cond">Dàn Ngưng Tụ (data_01.js)</option>
-                            </select>
-                        </div>
+                <div id="admin-dashboard" class="card-panel" style="display: none;">
+                    <!-- ADMIN DASHBOARD ANALYTICS -->
+                    <div id="admin-stats-panel" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <!-- Rendered by JS -->
+                    </div>
 
-                        <details id="admin-pin-manager"
-                            style="background: #fff3e0; padding: 15px; border-radius: 8px; border: 1px dashed #ff9800; margin-bottom: 20px;">
-                            <summary style="color: #e65100; font-weight: bold; font-size: 1.1rem; cursor: pointer;">ĐỔI
-                                MÃ PIN HIỆN TẠI</summary>
-                            <div class="grid-filter" style="align-items: end; margin-bottom: 0; margin-top: 15px;">
-                                <div class="input-group">
-                                    <label style="color: #e65100;">Chọn Vòng lặp PIN:</label>
-                                    <select id="admin-pin-select"
-                                        style="border-color: #ff9800; font-weight: bold;"></select>
+                    <style>
+                        .admin-menu-details {
+                            background: var(--card-bg);
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            padding: 15px;
+                            flex: 1;
+                            min-width: 250px;
+                            transition: all 0.3s;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                        }
+                        .admin-menu-details summary {
+                            font-weight: bold;
+                            cursor: pointer;
+                            color: var(--text-primary);
+                            outline: none;
+                            text-align: center;
+                            padding: 12px;
+                            background: #f1f5f9;
+                            border-radius: 6px;
+                            font-size: 1.05rem;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                            transition: all 0.2s;
+                            list-style: none; /* Hide default arrow in some browsers */
+                        }
+                        .admin-menu-details summary::-webkit-details-marker {
+                            display: none;
+                        }
+                        .admin-menu-details summary:hover {
+                            background: #e2e8f0;
+                            color: var(--primary);
+                            transform: translateY(-1px);
+                        }
+                        .admin-menu-details[open] {
+                            border-color: var(--primary);
+                            background: rgba(59, 130, 246, 0.03);
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                        }
+                        .admin-menu-details.wide-on-open[open] {
+                            flex-basis: 100%;
+                        }
+                        .admin-menu-details[open] summary {
+                            color: var(--primary);
+                            background: transparent;
+                            border-bottom: 2px solid var(--primary);
+                            border-radius: 0;
+                            box-shadow: none;
+                            margin-bottom: 15px;
+                            padding-bottom: 10px;
+                            transform: none;
+                        }
+                        [data-theme="dark"] .admin-menu-details summary { background: #334155; color: #f1f5f9; }
+                        [data-theme="dark"] .admin-menu-details summary:hover { background: #475569; }
+                        [data-theme="dark"] .admin-menu-details[open] summary { background: transparent; }
+                        
+                        .admin-menu-content {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 10px;
+                        }
+                        .admin-menu-content .btn-search {
+                            margin: 0;
+                            padding: 8px 12px;
+                            font-size: 0.9rem;
+                            width: 100%;
+                            background: #64748b; /* Màu xám bớt màu sắc */
+                        }
+                        .admin-menu-content .btn-search:hover {
+                            background: var(--primary);
+                        }
+                        .admin-menu-content input, .admin-menu-content select {
+                            width: 100%;
+                            box-sizing: border-box;
+                            margin-bottom: 5px;
+                        }
+                    </style>
+
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-start; flex-wrap: wrap;">
+                        
+                        <!-- QUẢN LÝ DỮ LIỆU -->
+                        <details class="admin-menu-details">
+                            <summary>🗄️ QUẢN LÝ DỮ LIỆU</summary>
+                            <div class="admin-menu-content">
+                                <div>
+                                    <label style="font-size: 0.9rem;">Chọn Database:</label>
+                                    <select id="admin-db-select" onchange="changeAdminDb()">
+                                        <option value="evap">DÀN BAY HƠI (data.js)</option>
+                                        <option value="cond">DÀN NGƯNG TỤ (data_01.js)</option>
+                                    </select>
                                 </div>
-                                <div class="input-group">
-                                    <label style="color: #e65100;">Xác thực Master Key:</label>
-                                    <input type="password" id="admin-pin-masterkey" placeholder="Nhập Master Key"
-                                        style="border-color: #ff9800;">
+                                <button class="btn-search" onclick="exportCurrentDb()">TẢI FILE DỮ LIỆU JS</button>
+                                <button class="btn-search" onclick="exportExcel()">XUẤT EXCEL (BÁO CÁO)</button>
+                                <div style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 5px;">
+                                    <label style="font-size: 0.9rem;">Nhập CSV Hàng Loạt:</label>
+                                    <input type="file" id="csv-upload" accept=".csv">
+                                    <button class="btn-search" onclick="importCSV()">📁 NHẬP CSV</button>
                                 </div>
-                                <button class="btn-search btn-search-warning" style="margin-top: 0; padding: 11px;"
-                                    onclick="applyManualPinChange()">🔄 ĐỔI PIN NGAY</button>
                             </div>
                         </details>
 
-                        <div id="admin-form-container"
-                            style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 20px;">
-                            <h4 style="margin-top: 0; color: var(--primary);" id="admin-form-title">THÊM MỚI MODEL</h4>
-                            <div id="admin-dynamic-form" class="grid-filter"></div>
-                            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                <button class="btn-search" style="margin-top: 0; flex: 1;" onclick="saveAdminModel()">💾
-                                    LƯU VÀO BỘ NHỚ</button>
-                                <button class="btn-search" style="margin-top: 0; flex: 1; background: #7f8c8d;"
-                                    onclick="resetAdminForm()">✖ HỦY / TẠO MỚI</button>
+                        <!-- ĐỔI MÃ PIN -->
+                        <details class="admin-menu-details" id="admin-pin-manager">
+                            <summary>🔐 ĐỔI MÃ PIN</summary>
+                            <div class="admin-menu-content">
+                                <div>
+                                    <label style="font-size: 0.9rem;">Chọn Vòng lặp PIN:</label>
+                                    <select id="admin-pin-select"></select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.9rem;">Xác thực Master Key:</label>
+                                    <input type="password" id="admin-pin-masterkey" placeholder="Nhập Master Key">
+                                </div>
+                                <button class="btn-search" onclick="applyManualPinChange()">🔄 ĐỔI PIN NGAY</button>
                             </div>
-                        </div>
+                        </details>
+
+                        <!-- QUẢN LÝ MÃ ID -->
+                        <details class="admin-menu-details" id="admin-dict-manager">
+                            <summary>📖 QUẢN LÝ MÃ ID</summary>
+                            <div class="admin-menu-content">
+                                <div>
+                                    <label style="font-size: 0.9rem;">Mã viết tắt (VD: HT):</label>
+                                    <input type="text" id="admin-dict-prefix" placeholder="Nhập mã viết tắt" style="text-transform: uppercase;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.9rem;">Tên Công ty/Khách hàng:</label>
+                                    <input type="text" id="admin-dict-name" placeholder="Tên Công ty...">
+                                </div>
+                                <button class="btn-search" onclick="addAdminDict()">➕ THÊM / CẬP NHẬT</button>
+                                <div class="table-responsive" style="margin-top: 10px; max-height: 150px; overflow-y: auto;">
+                                    <table class="result-table" style="font-size: 0.85rem;">
+                                        <thead>
+                                            <tr>
+                                                <th style="background: #64748b; padding: 5px;">MÃ ID</th>
+                                                <th style="background: #64748b; padding: 5px;">TÊN CÔNG TY</th>
+                                                <th style="background: #64748b; padding: 5px; width: 40px;">XÓA</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-dict-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- THÊM/SỬA MODEL -->
+                        <details class="admin-menu-details" id="admin-form-container">
+                            <summary>📝 THÊM / SỬA MODEL</summary>
+                            <div class="admin-menu-content">
+                                <div id="admin-form-title" style="color: var(--primary); font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 10px;">THÊM MỚI MODEL</div>
+                                <div id="admin-dynamic-form" class="grid-filter" style="margin-bottom: 0; margin-top: 10px;"></div>
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <button class="btn-search" style="margin-top: 0; flex: 1;" onclick="saveAdminModel()">💾 LƯU BỘ NHỚ</button>
+                                    <button class="btn-search" style="margin-top: 0; flex: 1; background: #7f8c8d;" onclick="resetAdminForm()">✖ HỦY</button>
+                                </div>
+                            </div>
+                        </details>
+
+                    </div>
 
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -284,21 +413,59 @@
                                 <tbody id="admin-table-body"></tbody>
                             </table>
                         </div>
+
+                        <!-- ĐĂNG XUẤT -->
+                        <div style="text-align: right; margin-top: 20px;">
+                            <button class="btn-search" style="padding: 12px 25px; background: #f44336; width: auto; display: inline-block; font-weight: bold;" onclick="window.location.reload()">ĐĂNG XUẤT HỆ THỐNG</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="footer">
-                Solution by <b>H-DESIGN</b> | GIA THINH HEAT EXCHANGE EQUIPMENT PRODUCTION CO.,LTD © 2026
+                Solution by <b style="cursor: pointer;" onclick="document.getElementById('admin-tab-btn').click();">H-DESIGN</b> | GIA THINH HEAT EXCHANGE EQUIPMENT PRODUCTION CO.,LTD © 2026
             </div>
+        </div>
+    </div>
+
+    <!-- DATALIST FOR ID PREFIX AUTOCOMPLETE -->
+    <datalist id="dl_id_prefix"></datalist>
+
+    <!-- MODAL GHI CHÚ -->
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeNoteModal()">&times;</span>
+            <h3
+                style="margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">
+                THÔNG TIN GHI CHÚ</h3>
+            <p id="note-content"
+                style="white-space: pre-wrap; word-wrap: break-word; line-height: 1.5; color: var(--text-primary);"></p>
         </div>
     </div>
 
     <script src="data.js"></script>
     <script src="data_01.js"></script>
     <script src="security.js"></script>
-    <script src="app.js"></script>
+    <!-- NÚT SO SÁNH NỔI -->
+    <button id="compare-btn-float" onclick="showCompareModal()">⚖️ SO SÁNH (0)</button>
+
+    <!-- MODAL SO SÁNH -->
+    <div id="compare-modal" class="modal">
+        <div class="modal-content" style="max-width: 1000px; width: 90%;">
+            <span class="close-btn" onclick="closeCompareModal()">&times;</span>
+            <h3 style="margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">SO SÁNH THIẾT BỊ</h3>
+            <div id="compare-content" style="overflow-x: auto;">
+                <!-- Table will be injected here -->
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn-search" style="background: #607d8b; padding: 10px 20px;" onclick="clearCompare()">🗑️ XÓA CHỌN LẠI</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT CHÍNH -->
     <script src="admin.js"></script>
+    <script src="app.js"></script>
 
 </body>
 

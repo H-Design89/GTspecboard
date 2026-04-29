@@ -1,12 +1,13 @@
 // --- BIẾN TOÀN CỤC CHO ADMIN ---
 let tempEvapDb = [];
 let tempCondDb = [];
+let tempDictionary = {};
 let currentAdminDb = 'evap';
 let editingModelId = null; // null = chế độ thêm mới, string = đang sửa
 
 // Lấy danh sách key (thuộc tính) mẫu từ database để tạo form tự động
-const evapKeys = ["id", "model", "loai_dan", "kw", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "delta_t", "van_hanh", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat"];
-const condKeys = ["id", "model", "loai_dan", "kw", "hp", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "t_ngungtu", "t_wb", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat"];
+const evapKeys = ["id", "model", "loai_dan", "kw", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "delta_t", "van_hanh", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "ghi_chu"];
+const condKeys = ["id", "model", "loai_dan", "kw", "hp", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "t_ngungtu", "t_wb", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "ghi_chu"];
 
 // Khởi tạo dữ liệu khi vào trang admin
 function initAdminData() {
@@ -16,6 +17,11 @@ function initAdminData() {
     }
     if (typeof modelDatabaseCond !== 'undefined') {
         tempCondDb = JSON.parse(JSON.stringify(modelDatabaseCond));
+    }
+    if (typeof customerDictionary !== 'undefined') {
+        tempDictionary = JSON.parse(JSON.stringify(customerDictionary));
+    } else {
+        tempDictionary = {};
     }
 }
 
@@ -30,6 +36,7 @@ function loginAdmin() {
         initAdminData();
         changeAdminDb(); // Load dữ liệu mặc định
         initPinManager(); // Load danh sách mã PIN
+        renderAdminDict(); // Load từ điển
     } else {
         document.getElementById('admin-error').style.display = 'block';
         setTimeout(() => document.getElementById('admin-error').style.display = 'none', 3000);
@@ -78,15 +85,42 @@ function renderAdminForm() {
         if (key === 'id') placeholder = 'Mã ID duy nhất (Bắt buộc)';
         if (key === 'model') placeholder = 'Tên Model (Bắt buộc)';
 
-        html += `
-            <div class="input-group">
-                <label>${key.toUpperCase()}:</label>
-                <input type="${type}" id="admin_input_${key}" placeholder="${placeholder}" ${key==='id'?'style="border-color:var(--primary); font-weight:bold;"':''} step="any" ${listAttr}>
-                ${datalistHtml}
-            </div>
-        `;
+        if (key === 'ghi_chu') {
+            html += `
+                <div class="input-group" style="grid-column: 1 / -1;">
+                    <label>GHI CHÚ:</label>
+                    <div id="admin_note_btn" class="admin-note-btn" onclick="toggleAdminNote()">+ Thêm ghi chú</div>
+                    <textarea id="admin_input_ghi_chu" placeholder="Nhập nội dung ghi chú..." style="display: none; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; margin-top: 5px; resize: vertical; min-height: 80px;"></textarea>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="input-group">
+                    <label>${key.toUpperCase()}:</label>
+                    <input type="${type}" id="admin_input_${key}" placeholder="${placeholder}" ${key==='id'?'style="border-color:var(--primary); font-weight:bold;"':''} step="any" ${listAttr}>
+                    ${datalistHtml}
+                </div>
+            `;
+        }
     });
     container.innerHTML = html;
+}
+
+function toggleAdminNote() {
+    const textarea = document.getElementById('admin_input_ghi_chu');
+    const btn = document.getElementById('admin_note_btn');
+    if (textarea.style.display === 'none') {
+        textarea.style.display = 'block';
+        btn.innerHTML = '- Ẩn ghi chú';
+        btn.style.backgroundColor = 'var(--primary)';
+        btn.style.color = 'white';
+        textarea.focus();
+    } else {
+        textarea.style.display = 'none';
+        btn.innerHTML = '+ Thêm ghi chú';
+        btn.style.backgroundColor = '#e3f2fd';
+        btn.style.color = 'var(--primary)';
+    }
 }
 
 // --- QUẢN LÝ MÃ PIN ---
@@ -121,6 +155,52 @@ function applyManualPinChange() {
     window.location.reload();
 }
 
+// --- QUẢN LÝ TỪ ĐIỂN MÃ ID ---
+function renderAdminDict() {
+    const tbody = document.getElementById('admin-dict-body');
+    if (!tbody) return;
+    
+    let html = '';
+    const keys = Object.keys(tempDictionary).sort();
+    
+    if (keys.length === 0) {
+        html = '<tr><td colspan="3" class="no-data">Chưa có mã ID nào trong từ điển.</td></tr>';
+    } else {
+        keys.forEach(k => {
+            html += `<tr>
+                <td class="val-bold">${k}</td>
+                <td style="text-align: left;">${tempDictionary[k]}</td>
+                <td><button style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="deleteAdminDict('${k}')">🗑</button></td>
+            </tr>`;
+        });
+    }
+    tbody.innerHTML = html;
+}
+
+function addAdminDict() {
+    const prefix = document.getElementById('admin-dict-prefix').value.trim().toUpperCase();
+    const name = document.getElementById('admin-dict-name').value.trim();
+    
+    if (!prefix || !name) {
+        alert("Vui lòng điền đầy đủ Mã viết tắt và Tên Công ty!");
+        return;
+    }
+    
+    tempDictionary[prefix] = name;
+    document.getElementById('admin-dict-prefix').value = '';
+    document.getElementById('admin-dict-name').value = '';
+    
+    renderAdminDict();
+    alert("Đã thêm/cập nhật từ điển thành công! Hãy bấm 'TẢI FILE DỮ LIỆU JS' của Dàn Bay Hơi để lưu lại.");
+}
+
+function deleteAdminDict(prefix) {
+    if (confirm(`Bạn có chắc muốn xóa mã khách hàng: ${prefix}?`)) {
+        delete tempDictionary[prefix];
+        renderAdminDict();
+    }
+}
+
 // --- RENDER BẢNG ---
 function renderAdminTable() {
     const db = currentAdminDb === 'evap' ? tempEvapDb : tempCondDb;
@@ -146,16 +226,68 @@ function renderAdminTable() {
             let rowHtml = `<tr>
                 <td style="white-space: nowrap;">
                     <button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="editAdminModel('${item.id}')">✏ Sửa</button>
+                    <button style="background:#0288d1; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="duplicateAdminModel('${item.id}')" title="Nhân bản Model">📑</button>
                     <button style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="deleteAdminModel('${item.id}')">🗑 Xóa</button>
                 </td>`;
             keys.forEach(k => {
-                rowHtml += `<td>${item[k] !== null && item[k] !== undefined ? item[k] : ''}</td>`;
+                if (k === 'ghi_chu') {
+                    if (item[k] && item[k].trim() !== '') {
+                        rowHtml += `<td style="text-align: center;"><span class="icon-info icon-note-active" onclick="showNoteModal(\`${item[k].replace(/`/g, '\\`')}\`)" title="Xem ghi chú">i</span></td>`;
+                    } else {
+                        rowHtml += `<td style="text-align: center;"><span class="icon-info icon-note-inactive" title="Không có ghi chú">i</span></td>`;
+                    }
+                } else {
+                    rowHtml += `<td>${item[k] !== null && item[k] !== undefined ? item[k] : ''}</td>`;
+                }
             });
             rowHtml += '</tr>';
             bodyHtml += rowHtml;
         });
     }
     tBody.innerHTML = bodyHtml;
+    
+    renderAdminStats(db);
+}
+
+// --- THỐNG KÊ DASHBOARD ---
+function renderAdminStats(db) {
+    const panel = document.getElementById('admin-stats-panel');
+    if (!panel) return;
+    
+    const countMoiChat = {};
+    const countLoaiDan = {};
+    
+    db.forEach(i => {
+        if (i.moi_chat) { countMoiChat[i.moi_chat] = (countMoiChat[i.moi_chat] || 0) + 1; }
+        if (i.loai_dan) { countLoaiDan[i.loai_dan] = (countLoaiDan[i.loai_dan] || 0) + 1; }
+    });
+    
+    let html = `
+        <div style="background: var(--primary); color: white; padding: 15px; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
+            <div style="font-size: 24px; font-weight: bold;">${db.length}</div>
+            <div style="font-size: 12px; opacity: 0.9;">TỔNG SỐ MODEL</div>
+        </div>
+    `;
+    
+    html += `
+        <div style="background: #0288d1; color: white; padding: 15px; border-radius: 8px; flex: 1; min-width: 200px;">
+            <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px; font-weight:bold;">THEO MÔI CHẤT</div>
+            <div style="font-size: 14px;">
+                ${Object.entries(countMoiChat).map(([k, v]) => `<span>${k}: <b>${v}</b></span>`).join(' | ') || 'Không có dữ liệu'}
+            </div>
+        </div>
+    `;
+    
+    html += `
+        <div style="background: #00796b; color: white; padding: 15px; border-radius: 8px; flex: 1; min-width: 200px;">
+            <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px; font-weight:bold;">THEO LOẠI DÀN</div>
+            <div style="font-size: 14px;">
+                ${Object.entries(countLoaiDan).map(([k, v]) => `<span>${k}: <b>${v}</b></span>`).join(' | ') || 'Không có dữ liệu'}
+            </div>
+        </div>
+    `;
+    
+    panel.innerHTML = html;
 }
 
 // --- XÓA MODEL ---
@@ -169,6 +301,35 @@ function deleteAdminModel(id) {
     }
     renderAdminTable();
     if (editingModelId === id) resetAdminForm();
+}
+
+// --- NHÂN BẢN MODEL ---
+function duplicateAdminModel(id) {
+    const db = currentAdminDb === 'evap' ? tempEvapDb : tempCondDb;
+    const item = db.find(i => i.id === id);
+    if (!item) return;
+
+    resetAdminForm(); // Reset trước khi fill
+    
+    // Fill the form
+    const keys = currentAdminDb === 'evap' ? evapKeys : condKeys;
+    keys.forEach(k => {
+        const el = document.getElementById(`admin_input_${k}`);
+        if (el) {
+            el.value = item[k] || '';
+        }
+    });
+    
+    // Modify ID slightly to avoid immediate collision
+    const elId = document.getElementById('admin_input_id');
+    if (elId) elId.value = item.id + '_COPY';
+    
+    document.getElementById('admin-form-title').innerText = "NHÂN BẢN MODEL (Đang copy từ " + item.id + ")";
+    document.getElementById('admin-form-title').style.color = 'var(--accent)';
+    
+    const formContainer = document.getElementById('admin-form-container');
+    if (formContainer) formContainer.open = true;
+    formContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
 // --- SỬA MODEL (ĐƯA LÊN FORM) ---
@@ -192,8 +353,29 @@ function editAdminModel(id) {
         if (el) el.value = modelToEdit[k] !== null && modelToEdit[k] !== undefined ? modelToEdit[k] : '';
     });
     
+    // Xử lý nút ghi chú
+    const noteTextarea = document.getElementById('admin_input_ghi_chu');
+    const noteBtn = document.getElementById('admin_note_btn');
+    if (noteTextarea && modelToEdit['ghi_chu'] && modelToEdit['ghi_chu'].trim() !== '') {
+        noteTextarea.style.display = 'block';
+        if (noteBtn) {
+            noteBtn.innerHTML = '- Ẩn ghi chú';
+            noteBtn.style.backgroundColor = 'var(--primary)';
+            noteBtn.style.color = 'white';
+        }
+    } else if (noteTextarea) {
+        noteTextarea.style.display = 'none';
+        if (noteBtn) {
+            noteBtn.innerHTML = '+ Thêm ghi chú';
+            noteBtn.style.backgroundColor = '#e3f2fd';
+            noteBtn.style.color = 'var(--primary)';
+        }
+    }
+
     // Cuộn lên form
-    document.getElementById('admin-form-container').scrollIntoView({ behavior: 'smooth' });
+    const formContainer = document.getElementById('admin-form-container');
+    if (formContainer) formContainer.open = true;
+    formContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
 // --- HỦY / TẠO MỚI (RESET FORM) ---
@@ -211,26 +393,70 @@ function resetAdminForm() {
             el.style.backgroundColor = 'white';
         }
     });
+
+    const noteTextarea = document.getElementById('admin_input_ghi_chu');
+    const noteBtn = document.getElementById('admin_note_btn');
+    if (noteTextarea) {
+        noteTextarea.style.display = 'none';
+        if (noteBtn) {
+            noteBtn.innerHTML = '+ Thêm ghi chú';
+            noteBtn.style.backgroundColor = '#e3f2fd';
+            noteBtn.style.color = 'var(--primary)';
+        }
+    }
 }
 
 // --- LƯU MODEL (THÊM/SỬA) ---
 function saveAdminModel() {
     const keys = currentAdminDb === 'evap' ? evapKeys : condKeys;
     const newModel = {};
-    
-    // Đọc dữ liệu từ form
+    let hasError = false;
+    let errorFields = [];
+
+    // Khôi phục viền cho tất cả input
     keys.forEach(k => {
-        const val = document.getElementById(`admin_input_${k}`).value;
+        const inputEl = document.getElementById(`admin_input_${k}`);
+        if(inputEl) {
+            inputEl.style.borderColor = "#ccc";
+            inputEl.style.backgroundColor = "white";
+        }
+    });
+    
+    // Đọc và kiểm tra dữ liệu từ form
+    keys.forEach(k => {
+        const inputEl = document.getElementById(`admin_input_${k}`);
+        if (!inputEl) return;
+        const val = inputEl.value.trim();
+        
         // Chuyển kiểu number nếu cần
         if (["kw", "hp", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "t_ngungtu", "t_wb", "delta_t", "v_wind", "dk_quat", "sl_quat"].includes(k)) {
-            newModel[k] = val === '' ? null : parseFloat(val);
+            if (val === '') {
+                newModel[k] = ""; // Cho phép để trống như user yêu cầu
+            } else {
+                let parsed = parseFloat(val);
+                if (isNaN(parsed)) {
+                    hasError = true;
+                    errorFields.push(k.toUpperCase());
+                    inputEl.style.borderColor = "red";
+                    inputEl.style.backgroundColor = "#ffebee";
+                } else {
+                    newModel[k] = parsed;
+                }
+            }
         } else {
             newModel[k] = val;
+            // Validate trường bắt buộc
+            if ((k === 'id' || k === 'model') && val === '') {
+                hasError = true;
+                errorFields.push(k.toUpperCase());
+                inputEl.style.borderColor = "red";
+                inputEl.style.backgroundColor = "#ffebee";
+            }
         }
     });
 
-    if (!newModel.id || !newModel.model) {
-        alert("Vui lòng điền tối thiểu Mã ID và Tên Model!");
+    if (hasError) {
+        alert("LỖI NHẬP LIỆU ở các trường: " + errorFields.join(', ') + ".\n\n- MÃ ID và MODEL là bắt buộc, không được để trống.\n- Các ô Thông số kỹ thuật (như Công suất, Diện tích, Nhiệt độ...) bắt buộc phải nhập SỐ (có thể dùng dấu . cho số thập phân) hoặc ĐỂ TRỐNG.");
         return;
     }
 
@@ -265,7 +491,14 @@ function exportCurrentDb() {
     
     // Chuyển mảng thành chuỗi JSON đẹp (có thụt lề)
     // Để giữ nguyên format mỗi object trên 1 dòng như file cũ, ta tùy biến xíu:
-    let fileContent = `// TỆP DỮ LIỆU TỰ ĐỘNG SINH TỪ QUẢN TRỊ ADMIN\nconst ${varName} = [\n`;
+    let fileContent = `// TỆP DỮ LIỆU TỰ ĐỘNG SINH TỪ QUẢN TRỊ ADMIN\n`;
+    
+    // Nếu là evap (data.js), chèn thêm customerDictionary
+    if (currentAdminDb === 'evap') {
+        fileContent += `const customerDictionary = ${JSON.stringify(tempDictionary, null, 2)};\n`;
+    }
+    
+    fileContent += `const ${varName} = [\n`;
     
     const lines = db.map(item => {
         let objStr = JSON.stringify(item);
@@ -315,3 +548,96 @@ function exportExcel() {
     link.click();
     document.body.removeChild(link);
 }
+
+// --- IMPORT CSV ---
+function importCSV() {
+    const fileInput = document.getElementById('csv-upload');
+    if (!fileInput || !fileInput.files.length) {
+        alert("Vui lòng chọn file CSV trước khi bấm Nhập CSV!");
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        const text = e.target.result;
+        try {
+            // Very simple CSV parser: split by newlines, split by comma
+            // Does not handle commas inside quotes perfectly, but sufficient for standard GT SpecBoard exports
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length < 2) {
+                alert("File CSV không hợp lệ hoặc không có dữ liệu!");
+                return;
+            }
+            
+            const headers = lines[0].split(',').map(h => h.toLowerCase().trim().replace(/['"]/g, ''));
+            const db = currentAdminDb === 'evap' ? tempEvapDb : tempCondDb;
+            let addedCount = 0;
+            
+            for (let i = 1; i < lines.length; i++) {
+                // Split handling basic quotes (basic regex)
+                const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+                if (values.length < 2) continue;
+                
+                const obj = {};
+                headers.forEach((h, index) => {
+                    if (index < values.length) {
+                        let val = values[index].replace(/^"|"$/g, '').trim();
+                        if (val === "" || val === "-") val = "";
+                        else if (!isNaN(val) && val !== "") val = parseFloat(val);
+                        obj[h] = val;
+                    }
+                });
+                
+                if (obj.id) {
+                    // Check if exists, overwrite if yes, else push
+                    const existingIndex = db.findIndex(item => item.id === obj.id);
+                    if (existingIndex > -1) {
+                        db[existingIndex] = obj;
+                    } else {
+                        db.push(obj);
+                    }
+                    addedCount++;
+                }
+            }
+            
+            renderAdminTable();
+            alert(`Nhập CSV thành công! Đã thêm/cập nhật ${addedCount} Model.\nVui lòng kiểm tra lại bảng và bấm "TẢI FILE DỮ LIỆU JS MỚI" để lưu.`);
+            fileInput.value = ""; // Reset input
+        } catch (error) {
+            console.error(error);
+            alert("Đã xảy ra lỗi khi đọc file CSV. Vui lòng kiểm tra lại định dạng.");
+        }
+    };
+    
+    reader.readAsText(file);
+}
+
+// --- TỰ ĐỘNG XỔ NGANG CHO MENU CÓ NHIỀU THÔNG TIN ---
+document.addEventListener('DOMContentLoaded', () => {
+    const detailsElements = document.querySelectorAll('.admin-menu-details');
+    
+    detailsElements.forEach(details => {
+        // Kiểm tra ngay khi tải trang (dành cho các menu có sẵn)
+        checkAndApplyWideClass(details);
+        
+        // Kiểm tra mỗi khi bật/tắt (dành cho menu render động như THÊM MODEL)
+        details.addEventListener('toggle', () => {
+            if (details.open) {
+                checkAndApplyWideClass(details);
+            }
+        });
+    });
+
+    function checkAndApplyWideClass(el) {
+        // Đếm số lượng ô nhập liệu bên trong
+        const inputCount = el.querySelectorAll('input, select, textarea').length;
+        
+        if (inputCount > 8) {
+            el.classList.add('wide-on-open');
+        } else {
+            el.classList.remove('wide-on-open');
+        }
+    }
+});

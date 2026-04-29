@@ -1,0 +1,40 @@
+=========================================================
+      HƯỚNG DẪN SỬ DỤNG PHẦN MỀM GT-SPECBOARD
+=========================================================
+Phiên bản: 3.0 (Advanced)
+Phát triển bởi: H-DESIGN | GIA THINH HEAT EXCHANGE EQUIPMENT
+
+Phần mềm GT-SpecBoard là công cụ tra cứu, quản lý và phân tích kỹ thuật dành cho các Kỹ sư và Quản trị viên. Dưới đây là hướng dẫn chi tiết cách sử dụng các tính năng.
+
+---------------------------------------------------------
+TÍNH NĂNG DÀNH CHO KỸ SƯ / NGƯỜI DÙNG CHUNG
+---------------------------------------------------------
+
+1. Giao diện Tối (Dark Mode)
+- Ở góc trên cùng bên phải màn hình (cạnh Logo), có một biểu tượng Mặt trời/Mặt trăng.
+- Bấm vào biểu tượng này để chuyển đổi qua lại giữa Giao diện Sáng (Ban ngày) và Giao diện Tối (Ban đêm). Thiết lập này sẽ được tự động lưu lại cho các lần truy cập sau.
+
+2. Tra cứu & Bộ Lọc Dữ Liệu
+- Hệ thống chia làm 2 khu vực chính: DÀN BAY HƠI và DÀN NGƯNG TỤ (chuyển đổi qua lại bằng 2 nút Tab trên cùng).
+- Tại đây, bạn có thể nhập các thông số cần tìm như: Loại ống, Môi chất, Nhiệt độ (Te, Tr), Công suất...
+- Tính năng Sai số (+/- %): Khi tìm theo Công suất (kW) hoặc HP, hệ thống cho phép tìm kiếm linh hoạt với mức sai số mặc định là 10%. (Ví dụ: Tìm 100kW, hệ thống sẽ trả về các dàn từ 90kW đến 110kW).
+- Sau khi nhập thông số, bấm nút "🔍 QUÉT DỮ LIỆU HỆ THỐNG".
+
+3. Sắp Xếp Bảng Kết Quả (Sorting)
+- Tại bảng kết quả, bạn sẽ thấy biểu tượng mũi tên (↕️) ở các cột tiêu đề.
+- Chỉ cần bấm vào tiêu đề cột (ví dụ: bấm vào chữ "Công suất" hoặc "MÃ ID"), hệ thống sẽ tự động sắp xếp lại dữ liệu trong bảng theo thứ tự Tăng dần hoặc Giảm dần.
+
+4. Tính năng So Sánh Thiết Bị (Compare)
+- Cột đầu tiên của bảng kết quả là cột Ô Vuông (Checkbox).
+- Bấm chọn (tick) vào các Model bạn đang phân vân (tối đa 4 Model cùng lúc).
+- Khi có ít nhất 1 thiết bị được chọn, một nút nổi "⚖️ SO SÁNH" sẽ xuất hiện ở góc dưới bên phải màn hình.
+- Bấm vào nút nổi này, một Bảng đối chiếu sẽ bật lên, hiển thị chi tiết các thông số của các thiết bị nằm cạnh nhau để bạn dễ dàng so sánh và tư vấn cho khách hàng.
+
+5. Tìm kiếm theo Mã Khách Hàng (MÃ ID)
+- Ô "MÃ ID" được thiết kế thông minh (gợi ý tự động). Bạn chỉ cần gõ mã viết tắt (VD: HT), hệ thống sẽ gợi ý tên Công ty đầy đủ (VD: Hưng Trí).
+
+
+---------------------------------------------------------
+HỖ TRỢ KỸ THUẬT:
+Mọi thắc mắc và yêu cầu nâng cấp, vui lòng liên hệ Bộ phận giải pháp H-DESIGN.
+Chúc bạn sử dụng phần mềm hiệu quả!

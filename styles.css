@@ -9,7 +9,22 @@
     --tab-active: #ffffff;
     --text-primary: #3c4043;
     --text-secondary: #5f6368;
-    --border-color: #dadce0;
+    --border-color: #e2e8f0;
+    --header-bg: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+[data-theme="dark"] {
+    --primary: #3b82f6;
+    --secondary: #0ea5e9;
+    --accent: #fb7185;
+    --warning: #fbbf24;
+    --success: #34d399;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --header-bg: linear-gradient(135deg, #0f172a, #1e293b);
 }
 
 body { 
@@ -134,7 +149,7 @@ body {
 
 /* HEADER VÀ TABS */
 .header { 
-    background: var(--secondary); 
+    background: var(--header-bg); 
     color: white; 
     padding: 15px 10px 0 10px; 
     text-align: center; 
@@ -332,53 +347,91 @@ input:focus, select:focus {
     background: #bf360c;
 }
 
-/* BẢNG KẾT QUẢ */
+/* BẢNG KẾT QUẢ VÀ SCROLL */
 .table-responsive { 
     overflow-x: auto; 
-    background: white; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-    margin-bottom: 20px;
+    overflow-y: auto;
+    max-height: 65vh; /* Enable vertical scroll */
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    position: relative; /* For sticky */
 }
-
 .result-table { 
     width: 100%; 
-    border-collapse: collapse; 
-    font-size: 0.9rem; 
+    border-collapse: separate; /* Fix for sticky borders */
+    border-spacing: 0;
+    min-width: 1000px; 
+    font-size: 14px; 
+}
+.result-table th, .result-table td { 
+    padding: 12px; 
     text-align: center; 
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
 }
-
 .result-table th { 
-    background: var(--secondary); 
+    background-color: var(--secondary); 
     color: white; 
-    padding: 14px 8px; 
-    border: 1px solid #ddd; 
     font-weight: bold; 
-    white-space: nowrap; 
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
-.result-table td { 
-    padding: 12px 8px; 
-    border: 1px solid #ddd; 
-    vertical-align: middle; 
+/* Sticky Columns */
+.result-table th:nth-child(1),
+.result-table td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background-color: inherit;
+}
+.result-table th:nth-child(1) {
+    z-index: 12;
+    background-color: var(--secondary);
 }
 
-.result-table tr {
-    transition: background-color 0.2s;
+.result-table th:nth-child(2),
+.result-table td:nth-child(2) {
+    position: sticky;
+    left: 40px;
+    z-index: 5;
+    background-color: inherit;
+    box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+}
+.result-table th:nth-child(2) {
+    z-index: 12;
+    background-color: var(--secondary);
 }
 
-.result-table tr:nth-child(even) { 
-    background: #f8f9fa; 
+.result-table tbody tr {
+    background-color: var(--card-bg);
 }
 
-.result-table tr:hover { 
-    background: var(--tab-bg); 
+.result-table tbody tr:nth-child(even) { 
+    background-color: #f8f9fa; 
+}
+
+.result-table tbody tr:hover { 
+    background-color: #f0f7ff; 
+}
+.result-table tr:hover td { 
+    background-color: transparent; 
 }
 
 .highlight { 
     font-weight: bold; 
     color: var(--primary); 
-    text-align: left; 
+    text-align: center; 
+}
+
+.model-container {
+    width: 230px;
+    margin: 0 auto;
+    text-align: left;
 }
 
 .val-success {
@@ -400,6 +453,19 @@ input:focus, select:focus {
     color: #7f8c8d;
 }
 
+.id-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 110px; /* Cố định chiều rộng để các chữ i thẳng hàng */
+    margin: 0 auto; /* Căn giữa toàn bộ cụm ID + Icon trong ô td */
+}
+
+.id-text {
+    flex-grow: 1;
+    text-align: right; /* Căn lề phải cho text ID */
+}
+
 .no-data { 
     padding: 40px; 
     color: var(--accent); 
@@ -418,4 +484,160 @@ input:focus, select:focus {
     font-style: italic; 
     color: var(--text-secondary); 
     font-size: 0.85rem; 
+}
+
+/* === MODAL & GHI CHÚ === */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 10000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.5); 
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background-color: var(--card);
+    margin: 15% auto; 
+    padding: 20px 25px;
+    border: 1px solid #888;
+    width: 80%; 
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: fadeInModal 0.3s ease-out;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+/* Biểu tượng chữ i cho ghi chú */
+.icon-info {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-family: serif;
+    font-weight: bold;
+    font-size: 12px;
+    margin-left: 5px;
+    cursor: default;
+    vertical-align: middle;
+}
+
+.icon-note-active {
+    background-color: var(--primary);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.icon-note-active:hover {
+    transform: scale(1.1);
+    background-color: var(--secondary);
+}
+
+.icon-note-inactive {
+    background-color: #e0e0e0;
+    color: #9e9e9e;
+}
+
+.admin-note-btn {
+    background-color: #e3f2fd;
+    color: var(--primary);
+    border: 1px dashed var(--primary);
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.2s;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.admin-note-btn:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* THÊM MỘT SỐ CSS CHO GIAO DIỆN TỐI (Tương phản bảng) */
+[data-theme="dark"] .result-table tbody tr { background-color: #1e293b; }
+[data-theme="dark"] .result-table tbody tr:nth-child(even) { background-color: #1a2235; }
+[data-theme="dark"] .result-table tbody tr:hover { background-color: #2a3752; }
+[data-theme="dark"] .result-table th { background-color: #0f172a; }
+[data-theme="dark"] .result-table th:nth-child(1),
+[data-theme="dark"] .result-table th:nth-child(2) { background-color: #0f172a; }
+[data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background-color: #0f172a; color: #f1f5f9; border-color: #334155; }
+[data-theme="dark"] .header-title-container h2 { color: #f1f5f9; }
+[data-theme="dark"] .nav-tab { background-color: #1e293b; color: #94a3b8; border-color: #334155; }
+[data-theme="dark"] .nav-tab.active { background-color: #3b82f6; color: white; }
+[data-theme="dark"] .grid-filter { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .modal-content { background-color: #1e293b; color: #f1f5f9; border: 1px solid #334155; }
+[data-theme="dark"] .app-container { background-color: #1e293b; }
+
+/* SẮP XẾP BẢNG */
+th[data-sort] { cursor: pointer; user-select: none; transition: background-color 0.2s; }
+th[data-sort]:hover { background-color: rgba(255,255,255,0.2) !important; }
+
+/* NÚT SO SÁNH NỔI */
+#compare-btn-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--primary);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 2px solid white;
+    display: none;
+    z-index: 1000;
+    transition: all 0.3s;
+}
+#compare-btn-float:hover {
+    transform: scale(1.05);
+    background: var(--secondary);
+}
+
+/* BẢNG SO SÁNH */
+.compare-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.compare-table th, .compare-table td { border: 1px solid var(--border-color); padding: 10px; text-align: center; }
+.compare-table th { background: var(--bg); font-weight: bold; color: var(--text-primary); text-align: left; }
+.compare-table td.val-bold { font-weight: bold; color: var(--primary); }
+[data-theme="dark"] .compare-table th { background: #0f172a; }
+
+/* CUSTOM CHECKBOX */
+.compare-cb {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary);
 }
