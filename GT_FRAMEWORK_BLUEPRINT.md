@@ -8,7 +8,7 @@
 - **Export/Import:** Xử lý file trực tiếp bằng `FileReader` (đối với CSV) và thao tác DOM Blob (đối với xuất CSV/JS).
 
 ## 2. Tiêu chuẩn Thiết kế (UI/UX Standards)
-- **Hệ thống Màu (CSS Variables):** Định nghĩa toàn bộ màu sắc qua CSS Root Variables (`--primary`, `--bg`, `--card-bg`, `--text-primary`...) để dễ dàng thay đổi hàng loạt.
+- **Hệ thống Màu (CSS Variables):** Định nghĩa toàn bộ màu sắc qua CSS Root Variables (`--primary`, `--bg`, `--card`, `--text-primary`...) để dễ dàng thay đổi hàng loạt.
 - **Dark Mode Tự động:** Hỗ trợ tính năng Dark Mode qua thẻ `data-theme="dark"` trên `<body>`, có nút gạt (Toggle) lưu trạng thái mượt mà.
 - **Bố cục Thích ứng (Responsive):** 
   - Sử dụng `Flexbox` và `Grid` (`grid-template-columns: repeat(auto-fill...)`).
@@ -30,7 +30,7 @@ Khi xây dựng dự án mới dựa trên khung này, AI cần thiết lập c�
 4. **Hệ thống Từ điển (Dictionary/Autocomplete):** Dùng thẻ `<datalist>` để tự động gợi ý mã khách hàng, tên công ty.
 
 ### B. Khu vực Quản trị (Admin Dashboard)
-1. **Bảo mật đa tầng:** Đăng nhập ẩn, sử dụng Chu kỳ thay đổi mã PIN (DRM Security) và Master Key.
+1. **Bảo mật đa tầng:** Đăng nhập ẩn (Easter egg dưới Footer), sử dụng Chu kỳ thay đổi mã PIN (DRM Security) và Master Key.
 2. **Thống kê Trực quan (Analytics):** Các thẻ màu sắc đếm tổng số lượng thiết bị, phân loại tự động.
 3. **Quản lý Menu Động (Collapsible Menu):** Các nút tính năng như *Đổi PIN*, *Nhập CSV*, *Thêm Model* nằm trong thẻ `<details>`, tự động xổ ngang (100% width) nếu có trên 8 thông tin nhập liệu (`.wide-on-open`).
 4. **CRUD Data:**
