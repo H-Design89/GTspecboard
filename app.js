@@ -175,8 +175,8 @@ function renderEvapTable() {
             <td>${fmt(i.s_tdn)}</td>
             <td>${fmt(i.tieu_chuan)}</td>
             <td>${fmt(i.delta_t)}</td>
-            <td>${fmt(i.t_bayhoi)}</td>
-            <td>${fmt(i.t_phong)}</td>
+            <td>${renderTempValue(i.t_bayhoi, i.note_t_bayhoi)}</td>
+            <td>${renderTempValue(i.t_phong, i.note_t_phong)}</td>
             <td>${i.moi_chat||"-"}</td>
             <td>${i.van_hanh||"-"}</td>
             <td class="val-bold">${fmt(i.v_wind)}</td>
@@ -256,10 +256,10 @@ function renderCondTable() {
             <td class="val-bold">${fmt(i.hp)}</td>
             <td>${fmt(i.s_tdn)}</td>
             <td>${fmt(i.tieu_chuan)}</td>
-            <td>${fmt(i.t_bayhoi)}</td>
-            <td>${fmt(i.t_phong)}</td>
-            <td>${fmt(i.t_ngungtu)}</td>
-            <td>${fmt(i.t_wb)}</td>
+            <td>${renderTempValue(i.t_bayhoi, i.note_t_bayhoi)}</td>
+            <td>${renderTempValue(i.t_phong, i.note_t_phong)}</td>
+            <td>${renderTempValue(i.t_ngungtu, i.note_t_ngungtu)}</td>
+            <td>${renderTempValue(i.t_wb, i.note_t_wb)}</td>
             <td>${i.moi_chat||"-"}</td>
             <td class="val-bold">${fmt(i.v_wind)}</td>
             <td class="val-id">
@@ -375,7 +375,7 @@ function showCompareModal() {
     // Custom label map
     const keyLabels = {
         'model': 'Mã Model', 'loai_dan': 'Loại Dàn', 'kw': 'Công suất (kW)', 'hp': 'CS Máy (HP)',
-        's_tdn': 'DTTĐN (m2)', 'tieu_chuan': 'Tiêu chuẩn (m2/kW)', 't_bayhoi': 'Te (°C)', 
+        's_tdn': 'DTTĐN (m2)', 'tieu_chuan': 'Tiêu chuẩn (m2/kW)', 't_bayhoi': 'Tmc (°C)', 
         't_phong': 'Tr (°C)', 'delta_t': 'Delta T (K)', 't_ngungtu': 'Tc (°C)', 't_wb': 'Twb (°C)',
         'moi_chat': 'Môi chất', 'van_hanh': 'Vận hành', 'loai_ong': 'Loại ống', 'loai_canh': 'Lá tản nhiệt',
         'v_wind': 'Tốc độ gió (m/s)', 'dk_quat': 'Đường kính quạt', 'sl_quat': 'Số lượng quạt'
@@ -391,7 +391,11 @@ function showCompareModal() {
         tableHtml += `<tr><td style="font-weight: bold;">${keyLabels[k] || k}</td>`;
         compareList.forEach(i => {
             const val = i[k];
-            tableHtml += `<td class="${k === 'kw' || k === 'hp' ? 'val-bold' : ''}">${val != null ? val : '-'}</td>`;
+            let valHTML = val != null ? val : '-';
+            if (['t_bayhoi', 't_phong', 't_ngungtu', 't_wb'].includes(k)) {
+                valHTML = renderTempValue(val, i['note_' + k]);
+            }
+            tableHtml += `<td class="${k === 'kw' || k === 'hp' ? 'val-bold' : ''}">${valHTML}</td>`;
         });
         tableHtml += `</tr>`;
     });

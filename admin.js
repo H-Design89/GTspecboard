@@ -85,6 +85,15 @@ function renderAdminForm() {
         if (key === 'id') placeholder = 'Mã ID duy nhất (Bắt buộc)';
         if (key === 'model') placeholder = 'Tên Model (Bắt buộc)';
 
+        const keyLabels = {
+            'model': 'Mã Model', 'loai_dan': 'Loại Dàn', 'kw': 'Công suất (kW)', 'hp': 'CS Máy (HP)',
+            's_tdn': 'DTTĐN (m2)', 'tieu_chuan': 'Tiêu chuẩn (m2/kW)', 't_bayhoi': 'Tmc (°C)', 
+            't_phong': 'Tr (°C)', 'delta_t': 'Delta T (K)', 't_ngungtu': 'Tc (°C)', 't_wb': 'Twb (°C)',
+            'moi_chat': 'Môi chất', 'van_hanh': 'Vận hành', 'loai_ong': 'Loại ống', 'loai_canh': 'Lá tản nhiệt',
+            'v_wind': 'Tốc độ gió (m/s)', 'dk_quat': 'Đường kính quạt', 'sl_quat': 'Số lượng quạt'
+        };
+        let labelText = keyLabels[key] || key.toUpperCase();
+
         if (key === 'ghi_chu') {
             html += `
                 <div class="input-group" style="grid-column: 1 / -1;">
@@ -96,7 +105,7 @@ function renderAdminForm() {
         } else {
             html += `
                 <div class="input-group">
-                    <label>${key.toUpperCase()}:</label>
+                    <label>${labelText}:</label>
                     <input type="${type}" id="admin_input_${key}" placeholder="${placeholder}" ${key==='id'?'style="border-color:var(--primary); font-weight:bold;"':''} step="any" ${listAttr}>
                     ${datalistHtml}
                 </div>
@@ -191,7 +200,7 @@ function addAdminDict() {
     document.getElementById('admin-dict-name').value = '';
     
     renderAdminDict();
-    alert("Đã thêm/cập nhật từ điển thành công! Hãy bấm 'TẢI FILE DỮ LIỆU JS' của Dàn Bay Hơi để lưu lại.");
+    alert("Đã thêm/cập nhật từ điển thành công! Hãy bấm 'TẢI FILE DỮ LIỆU JS' của Air Cooler để lưu lại.");
 }
 
 function deleteAdminDict(prefix) {

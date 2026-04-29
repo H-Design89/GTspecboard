@@ -15,7 +15,7 @@ TÍNH NĂNG DÀNH CHO KỸ SƯ / NGƯỜI DÙNG CHUNG
 - Bấm vào biểu tượng này để chuyển đổi qua lại giữa Giao diện Sáng (Ban ngày) và Giao diện Tối (Ban đêm). Thiết lập này sẽ được tự động lưu lại cho các lần truy cập sau.
 
 2. Tra cứu & Bộ Lọc Dữ Liệu
-- Hệ thống chia làm 2 khu vực chính: DÀN BAY HƠI và DÀN NGƯNG TỤ (chuyển đổi qua lại bằng 2 nút Tab trên cùng).
+- Hệ thống chia làm 2 khu vực chính: AIR COOLER và CONDENSER (chuyển đổi qua lại bằng 2 nút Tab trên cùng).
 - Tại đây, bạn có thể nhập các thông số cần tìm như: Loại ống, Môi chất, Nhiệt độ (Te, Tr), Công suất...
 - Tính năng Sai số (+/- %): Khi tìm theo Công suất (kW) hoặc HP, hệ thống cho phép tìm kiếm linh hoạt với mức sai số mặc định là 10%. (Ví dụ: Tìm 100kW, hệ thống sẽ trả về các dàn từ 90kW đến 110kW).
 - Sau khi nhập thông số, bấm nút "🔍 QUÉT DỮ LIỆU HỆ THỐNG".

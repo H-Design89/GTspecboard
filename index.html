@@ -58,7 +58,7 @@
                     <button id="theme-toggle" onclick="toggleTheme()" style="position: absolute; right: 0; top: 0; background: none; border: none; color: white; font-size: 24px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🌙</button>
                 </div>
                 <div class="nav-tabs">
-                    <button class="nav-tab active" onclick="switchTab('evap', this)">DÀN BAY HƠI (AIR COOLER)</button>
+                    <button class="nav-tab active" onclick="switchTab('evap', this)">AIR COOLER</button>
                     <button class="nav-tab" onclick="switchTab('cond', this)">CONDENSER</button>
                     <button class="nav-tab" id="admin-tab-btn" onclick="switchTab('admin', this)"
                         style="display: none;">SYSTEM ADMIN</button>
@@ -67,7 +67,7 @@
 
             <div id="page-evap" class="app-page active">
                 <div class="card-panel">
-                    <div class="section-title">BỘ LỌC THÔNG SỐ - THIẾT BỊ BAY HƠI</div>
+                    <div class="section-title">BỘ LỌC THÔNG SỐ - AIR COOLER</div>
                     <div class="grid-filter">
                         <div class="input-group"><label>Loại thiết bị:</label><select id="f_dan">
                                 <option value="ALL">-All-</option>
@@ -86,7 +86,7 @@
                             </select></div>
                     </div>
                     <div class="grid-filter">
-                        <div class="input-group"><label>Te (°C):</label><input type="number" id="f_te"
+                        <div class="input-group"><label>Tmc (°C):</label><input type="number" id="f_te"
                                 placeholder="-All-"></div>
                         <div class="input-group"><label>Tr (°C):</label><input type="number" id="f_tr"
                                 placeholder="-All-"></div>
@@ -121,7 +121,7 @@
                                 <th data-sort="s_tdn" onclick="sortTable('evap', 's_tdn')">DTTĐN<br>(m2) ↕️</th>
                                 <th data-sort="tieu_chuan" onclick="sortTable('evap', 'tieu_chuan')">Tiêu chuẩn<br>(m2/kW) ↕️</th>
                                 <th data-sort="delta_t" onclick="sortTable('evap', 'delta_t')">Delta T<br>(K) ↕️</th>
-                                <th data-sort="t_bayhoi" onclick="sortTable('evap', 't_bayhoi')">Te<br>(°C) ↕️</th>
+                                <th data-sort="t_bayhoi" onclick="sortTable('evap', 't_bayhoi')">Tmc<br>(°C) ↕️</th>
                                 <th data-sort="t_phong" onclick="sortTable('evap', 't_phong')">Tr<br>(°C) ↕️</th>
                                 <th>Môi chất</th>
                                 <th>Vận hành</th>
@@ -140,7 +140,7 @@
 
             <div id="page-cond" class="app-page">
                 <div class="card-panel">
-                    <div class="section-title">BỘ LỌC THÔNG SỐ - DÀN NGƯNG TỤ</div>
+                    <div class="section-title">BỘ LỌC THÔNG SỐ - CONDENSER</div>
                     <div class="grid-filter">
                         <div class="input-group"><label>Loại thiết bị:</label><select id="f_dan_c">
                                 <option value="ALL">-All-</option>
@@ -156,7 +156,7 @@
                             </select></div>
                     </div>
                     <div class="grid-filter">
-                        <div class="input-group"><label>Te (°C):</label><input type="number" id="f_te_c"
+                        <div class="input-group"><label>Tmc (°C):</label><input type="number" id="f_te_c"
                                 placeholder="-All-"></div>
                         <div class="input-group"><label>Tr (°C):</label><input type="number" id="f_tr_c"
                                 placeholder="-All-"></div>
@@ -194,7 +194,7 @@
                                 <th data-sort="hp" onclick="sortTable('cond', 'hp')">CS Máy<br>(HP) ↕️</th>
                                 <th data-sort="s_tdn" onclick="sortTable('cond', 's_tdn')">DTTĐN<br>(m2) ↕️</th>
                                 <th data-sort="tieu_chuan" onclick="sortTable('cond', 'tieu_chuan')">Tiêu chuẩn<br>(m2/kW) ↕️</th>
-                                <th data-sort="t_bayhoi" onclick="sortTable('cond', 't_bayhoi')">Te<br>(°C) ↕️</th>
+                                <th data-sort="t_bayhoi" onclick="sortTable('cond', 't_bayhoi')">Tmc<br>(°C) ↕️</th>
                                 <th data-sort="t_phong" onclick="sortTable('cond', 't_phong')">Tr<br>(°C) ↕️</th>
                                 <th data-sort="t_ngungtu" onclick="sortTable('cond', 't_ngungtu')">Tc<br>(°C) ↕️</th>
                                 <th data-sort="t_wb" onclick="sortTable('cond', 't_wb')">Twb<br>(°C) ↕️</th>
@@ -229,8 +229,19 @@
                 </div>
 
                 <div id="admin-dashboard" class="card-panel" style="display: none;">
+                    <!-- ADMIN DASHBOARD HEADER & DB SWITCH -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <h3 style="margin: 0; color: var(--primary);">📊 TỔNG QUAN HỆ THỐNG</h3>
+                        <div>
+                            <select id="admin-db-select" onchange="changeAdminDb()" style="padding: 8px 20px; border-radius: 20px; border: 2px solid var(--primary); background: var(--card); color: var(--primary); font-weight: bold; cursor: pointer; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); appearance: none; text-align: center; text-align-last: center;">
+                                <option value="evap">❄️ AIR COOLER</option>
+                                <option value="cond">🔥 CONDENSER</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- ADMIN DASHBOARD ANALYTICS -->
-                    <div id="admin-stats-panel" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div id="admin-stats-panel" style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
                         <!-- Rendered by JS -->
                     </div>
 
@@ -317,13 +328,6 @@
                         <details class="admin-menu-details">
                             <summary>🗄️ QUẢN LÝ DỮ LIỆU</summary>
                             <div class="admin-menu-content">
-                                <div>
-                                    <label style="font-size: 0.9rem;">Chọn Database:</label>
-                                    <select id="admin-db-select" onchange="changeAdminDb()">
-                                        <option value="evap">DÀN BAY HƠI (data.js)</option>
-                                        <option value="cond">DÀN NGƯNG TỤ (data_01.js)</option>
-                                    </select>
-                                </div>
                                 <button class="btn-search" onclick="exportCurrentDb()">TẢI FILE DỮ LIỆU JS</button>
                                 <button class="btn-search" onclick="exportExcel()">XUẤT EXCEL (BÁO CÁO)</button>
                                 <div style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 5px;">
@@ -464,6 +468,33 @@
     </div>
 
     <!-- SCRIPT CHÍNH -->
+    
+    <!-- Temperature Note Popup -->
+    <div id="temp-note-popup" style="display:none; position:fixed; background:var(--card); border:1px solid var(--primary); padding:10px 15px; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.15); z-index:9999; font-size:13px; color:var(--primary); font-weight:bold; pointer-events:none;"></div>
+    <script>
+        function showTempNote(event, text) {
+            const popup = document.getElementById('temp-note-popup');
+            popup.innerHTML = text;
+            popup.style.display = 'block';
+            
+            // Tính toán vị trí chuột để không bị lấn màn hình
+            let x = event.clientX + 15;
+            let y = event.clientY + 15;
+            
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            
+            // Ẩn đi sau 2.5s
+            setTimeout(() => { popup.style.display = 'none'; }, 2500);
+        }
+        
+        // Ẩn popup khi click ra ngoài
+        document.addEventListener('click', () => {
+            const popup = document.getElementById('temp-note-popup');
+            if (popup) popup.style.display = 'none';
+        });
+    </script>
+
     <script src="admin.js"></script>
     <script src="app.js"></script>
 
