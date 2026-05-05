@@ -57,6 +57,7 @@ function populateAllDropdowns() {
         evapConfigs.forEach(cfg => {
             const el = document.getElementById(cfg.id);
             if (el) {
+                el.innerHTML = '<option value="ALL">-All-</option>';
                 const uniqueVals = extractUnique(modelDatabase, cfg.key);
                 uniqueVals.forEach(val => el.innerHTML += `<option value="${val}">${val}</option>`);
             }
@@ -75,6 +76,7 @@ function populateAllDropdowns() {
         condConfigs.forEach(cfg => {
             const el = document.getElementById(cfg.id);
             if (el) {
+                el.innerHTML = '<option value="ALL">-All-</option>';
                 const uniqueVals = extractUnique(modelDatabaseCond, cfg.key);
                 uniqueVals.forEach(val => el.innerHTML += `<option value="${val}">${val}</option>`);
             }
@@ -96,6 +98,7 @@ function populateAllDropdowns() {
         }).filter(p => p !== "");
         
         const uniquePrefixes = [...new Set(prefixes)].sort();
+        dlIdPrefix.innerHTML = '';
         uniquePrefixes.forEach(p => {
             let label = "";
             if (typeof customerDictionary !== 'undefined' && customerDictionary[p]) {
@@ -108,6 +111,15 @@ function populateAllDropdowns() {
 
 // --- HÀM ĐỊNH DẠNG SỐ 1 CHỮ SỐ THẬP PHÂN ---
 const fmt = (val) => (val != null && val !== "") ? parseFloat(val).toFixed(1) : "-";
+
+// --- HÀM HIỂN THỊ NHIỆT ĐỘ CÓ NOTE ---
+function renderTempValue(val, note) {
+    if (val == null || val === "") return "-";
+    if (note && note.trim() !== "") {
+        return `<span style="cursor:help; text-decoration:underline dotted var(--primary); color:var(--primary); font-weight:bold;" onmouseenter="showTempNote(event, \`${note.replace(/`/g, '\\`')}\`)" onmouseleave="document.getElementById('temp-note-popup').style.display='none'">${fmt(val)}</span>`;
+    }
+    return fmt(val);
+}
 
 // --- TÌM KIẾM DÀN BAY HƠI ---
 function performSearchEvap() {

@@ -196,17 +196,25 @@ function addAdminDict() {
     }
     
     tempDictionary[prefix] = name;
+    if (typeof customerDictionary !== 'undefined') {
+        customerDictionary[prefix] = name;
+    }
     document.getElementById('admin-dict-prefix').value = '';
     document.getElementById('admin-dict-name').value = '';
     
     renderAdminDict();
+    if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
     alert("Đã thêm/cập nhật từ điển thành công! Hãy bấm 'TẢI FILE DỮ LIỆU JS' của Air Cooler để lưu lại.");
 }
 
 function deleteAdminDict(prefix) {
     if (confirm(`Bạn có chắc muốn xóa mã khách hàng: ${prefix}?`)) {
         delete tempDictionary[prefix];
+        if (typeof customerDictionary !== 'undefined') {
+            delete customerDictionary[prefix];
+        }
         renderAdminDict();
+        if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
     }
 }
 
@@ -305,10 +313,19 @@ function deleteAdminModel(id) {
     
     if (currentAdminDb === 'evap') {
         tempEvapDb = tempEvapDb.filter(i => i.id !== id);
+        if (typeof modelDatabase !== 'undefined') {
+            modelDatabase.length = 0;
+            modelDatabase.push(...tempEvapDb);
+        }
     } else {
         tempCondDb = tempCondDb.filter(i => i.id !== id);
+        if (typeof modelDatabaseCond !== 'undefined') {
+            modelDatabaseCond.length = 0;
+            modelDatabaseCond.push(...tempCondDb);
+        }
     }
     renderAdminTable();
+    if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
     if (editingModelId === id) resetAdminForm();
 }
 
@@ -477,6 +494,10 @@ function saveAdminModel() {
             if (tempEvapDb.some(i => i.id === newModel.id)) return alert("Mã ID này đã tồn tại!");
             tempEvapDb.push(newModel);
         }
+        if (typeof modelDatabase !== 'undefined') {
+            modelDatabase.length = 0;
+            modelDatabase.push(...tempEvapDb);
+        }
     } else {
         if (editingModelId) {
             const idx = tempCondDb.findIndex(i => i.id === editingModelId);
@@ -485,7 +506,13 @@ function saveAdminModel() {
             if (tempCondDb.some(i => i.id === newModel.id)) return alert("Mã ID này đã tồn tại!");
             tempCondDb.push(newModel);
         }
+        if (typeof modelDatabaseCond !== 'undefined') {
+            modelDatabaseCond.length = 0;
+            modelDatabaseCond.push(...tempCondDb);
+        }
     }
+
+    if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
 
     alert(editingModelId ? "Đã cập nhật Model thành công!" : "Đã thêm Model mới thành công!");
     resetAdminForm();
@@ -611,7 +638,20 @@ function importCSV() {
                 }
             }
             
+            if (currentAdminDb === 'evap') {
+                if (typeof modelDatabase !== 'undefined') {
+                    modelDatabase.length = 0;
+                    modelDatabase.push(...tempEvapDb);
+                }
+            } else {
+                if (typeof modelDatabaseCond !== 'undefined') {
+                    modelDatabaseCond.length = 0;
+                    modelDatabaseCond.push(...tempCondDb);
+                }
+            }
+            
             renderAdminTable();
+            if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
             alert(`Nhập CSV thành công! Đã thêm/cập nhật ${addedCount} Model.\nVui lòng kiểm tra lại bảng và bấm "TẢI FILE DỮ LIỆU JS MỚI" để lưu.`);
             fileInput.value = ""; // Reset input
         } catch (error) {
