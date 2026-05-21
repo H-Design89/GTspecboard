@@ -10,8 +10,24 @@ strDesktop = objShell.SpecialFolders("Desktop")
 ' Tạo shortcut tên GT-SpecBoard.lnk ngoài Desktop
 Set objShortcut = objShell.CreateShortcut(strDesktop & "\GT-SpecBoard.lnk")
 
-' Trỏ mục tiêu chạy vào file index.html
-objShortcut.TargetPath = strCurrentFolder & "\index.html"
+' Tìm đường dẫn trình duyệt (Ưu tiên Chrome, sau đó là Edge)
+strChrome = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+strChrome86 = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+strEdge = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+
+If objFSO.FileExists(strChrome) Then
+    objShortcut.TargetPath = strChrome
+    objShortcut.Arguments = "--app=""" & strCurrentFolder & "\index.html"""
+ElseIf objFSO.FileExists(strChrome86) Then
+    objShortcut.TargetPath = strChrome86
+    objShortcut.Arguments = "--app=""" & strCurrentFolder & "\index.html"""
+ElseIf objFSO.FileExists(strEdge) Then
+    objShortcut.TargetPath = strEdge
+    objShortcut.Arguments = "--app=""" & strCurrentFolder & "\index.html"""
+Else
+    ' Fallback nếu không tìm thấy Chrome hay Edge
+    objShortcut.TargetPath = strCurrentFolder & "\index.html"
+End If
 
 ' Cấp quyền thư mục làm việc (để file HTML đọc được data.js)
 objShortcut.WorkingDirectory = strCurrentFolder
@@ -19,7 +35,10 @@ objShortcut.WorkingDirectory = strCurrentFolder
 ' Cài đặt hình ảnh Icon (Bắt buộc phải có file logo Gt.ico trong thư mục)
 objShortcut.IconLocation = strCurrentFolder & "\logo-Gt.ico"
 
+' Cài đặt chạy cửa sổ phóng to mặc định (1 = Bình thường, 3 = Phóng to)
+objShortcut.WindowStyle = 3
+
 ' Lưu shortcut
 objShortcut.Save
 
-MsgBox "Da tao thanh cong Shortcut GT-SpecBoard ra Desktop!", vbInformation, "H-DESIGN"
+MsgBox "Da tao thanh cong Shortcut GT-SpecBoard ra Desktop (Che do App Mode)!", vbInformation, "H-DESIGN"
