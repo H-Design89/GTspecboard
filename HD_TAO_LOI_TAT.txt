@@ -1,0 +1,34 @@
+====================================================================
+MẪU CÂU LỆNH (PROMPT) YÊU CẦU AI TẠO CÔNG CỤ CÀI ĐẶT LỐI TẮT DESKTOP
+====================================================================
+Hướng dẫn sử dụng: Khi bạn tạo một Web-app mới, hãy copy toàn bộ nội dung từ phần "YÊU CẦU:" trở xuống và gửi cho AI (ChatGPT, Gemini, Claude...). Nhớ thay đổi [TÊN APP CỦA BẠN] và [LINK WEB CỦA BẠN] ở các mục cần thiết.
+
+--------------------------------------------------------------------
+
+YÊU CẦU: TẠO CÔNG CỤ CÀI ĐẶT LỐI TẮT DESKTOP ỨNG DỤNG WEB BẰNG VBSCRIPT
+
+1. Mục tiêu:
+Tôi đang có một ứng dụng web (Web-app). Tôi muốn tránh việc dùng tính năng "Tạo lối tắt" mặc định của trình duyệt vì nó bị dính logo Chrome ở góc icon. 
+Hãy giúp tôi tạo một gói cài đặt (.zip) cho người dùng tải về. Trong đó chứa một file script (.vbs) để tự động tạo lối tắt (Shortcut) ra màn hình Desktop. Lối tắt này phải dùng icon nguyên bản của tôi và khi mở lên phải chạy dưới dạng App độc lập.
+
+2. Chi tiết kỹ thuật bạn cần thực hiện cho tôi:
+
+Bước 1: Viết mã file `Install_App.vbs`
+Hãy viết một file VBScript với kịch bản sau:
+- Tự động lấy thư mục hiện tại của file chạy.
+- Tạo một thư mục ẩn hoặc an toàn trong hệ thống (Ví dụ: C:\Users\Public\[TÊN APP CỦA BẠN]).
+- Copy file icon (ví dụ logo.ico) từ thư mục hiện tại vào thư mục an toàn kia. Việc này rất quan trọng để tránh tình trạng người dùng giải nén ra chạy xong, xóa thư mục tải về thì bị mất Icon ngoài Desktop.
+- Tạo một Shortcut ngoài Desktop.
+- Trỏ Target của Shortcut vào trình duyệt (ưu tiên tìm đường dẫn chrome.exe hoặc msedge.exe).
+- Thêm Arguments cho Shortcut là: `--app="[LINK WEB CỦA BẠN]"` để nó mở web như một phần mềm độc lập (không có thanh địa chỉ).
+- Trỏ Icon Location của Shortcut vào cái file logo.ico đã được copy ở thư mục an toàn.
+- Cuối cùng, hiện một hộp thoại (MsgBox) thông báo cài đặt thành công và nhắc người dùng có thể xóa thư mục vừa tải về.
+
+Bước 2: Hướng dẫn tôi tạo file ZIP
+- Hướng dẫn tôi cách dùng terminal (hoặc thao tác tay) để nén file `Install_App.vbs` và `logo.ico` thành file `App_Installer.zip`.
+
+Bước 3: Code UI cho nút Download
+- Cung cấp cho tôi đoạn code HTML/CSS để tạo một nút nhấn "💻 Cài đặt App" thật đẹp trên thanh điều hướng web của tôi.
+- Nút này sẽ là thẻ <a> có thuộc tính download trỏ đến file `App_Installer.zip`.
+
+Hãy viết cho tôi toàn bộ code VBScript và code nút bấm HTML dựa trên hướng dẫn này.
