@@ -84,6 +84,13 @@
                         <div class="input-group"><label>Cánh tản nhiệt:</label><select id="f_canh">
                                 <option value="ALL">-All-</option>
                             </select></div>
+                        <div class="input-group">
+                            <label>Thiết kế:</label>
+                            <div class="toggle-btn-group" style="padding: 2px; width: fit-content; margin-top: auto; margin-bottom: 2px;">
+                                <button type="button" class="toggle-btn active" id="f_std_evap_standard" onclick="setSearchStandardFilter('evap', 'standard', this)">Tiêu chuẩn</button>
+                                <button type="button" class="toggle-btn" id="f_std_evap_all" onclick="setSearchStandardFilter('evap', 'all', this)">Tất cả</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="grid-filter">
                         <div class="input-group"><label>Tmc (°C):</label><input type="number" id="f_te"
@@ -154,6 +161,13 @@
                         <div class="input-group"><label>Cánh tản nhiệt:</label><select id="f_canh_c">
                                 <option value="ALL">-All-</option>
                             </select></div>
+                        <div class="input-group">
+                            <label>Thiết kế:</label>
+                            <div class="toggle-btn-group" style="padding: 2px; width: fit-content; margin-top: auto; margin-bottom: 2px;">
+                                <button type="button" class="toggle-btn active" id="f_std_cond_standard" onclick="setSearchStandardFilter('cond', 'standard', this)">Tiêu chuẩn</button>
+                                <button type="button" class="toggle-btn" id="f_std_cond_all" onclick="setSearchStandardFilter('cond', 'all', this)">Tất cả</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="grid-filter">
                         <div class="input-group"><label>Tmc (°C):</label><input type="number" id="f_te_c"
@@ -398,9 +412,15 @@
                     </div>
 
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h4 style="margin: 0;">DANH SÁCH THIẾT BỊ <span id="admin-db-count"
-                                    style="color: var(--secondary);">(0)</span></h4>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                <h4 style="margin: 0; white-space: nowrap;">DANH SÁCH THIẾT BỊ <span id="admin-db-count"
+                                        style="color: var(--secondary);">(0)</span></h4>
+                                <div class="toggle-btn-group">
+                                    <button class="toggle-btn active" id="admin-filter-standard" onclick="setAdminTableFilter('standard')">Tiêu chuẩn</button>
+                                    <button class="toggle-btn" id="admin-filter-all" onclick="setAdminTableFilter('all')">Tất cả</button>
+                                </div>
+                            </div>
                             <div style="display: flex; gap: 10px;">
                                 <button class="btn-search"
                                     style="width: auto; padding: 10px 20px; background: #1d6f42; margin: 0;"

@@ -4,6 +4,23 @@ let currentEvapRes = [];
 let currentCondRes = [];
 let sortCol = '';
 let sortAsc = true;
+let searchStandardFilterEvap = 'standard';
+let searchStandardFilterCond = 'standard';
+
+function setSearchStandardFilter(type, filterVal, btnEl) {
+    if (type === 'evap') {
+        searchStandardFilterEvap = filterVal;
+    } else {
+        searchStandardFilterCond = filterVal;
+    }
+    
+    // Cập nhật active class trong nhóm nút
+    const group = btnEl.closest('.toggle-btn-group');
+    if (group) {
+        group.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+        btnEl.classList.add('active');
+    }
+}
 
 // Khởi tạo Theme
 function initTheme() {
@@ -146,6 +163,9 @@ function performSearchEvap() {
     };
 
     const res = modelDatabase.filter(i => {
+        if (searchStandardFilterEvap === 'standard' && i.is_standard === false) {
+            return false;
+        }
         let ok = (f.dan==="ALL"||i.loai_dan===f.dan) && 
                  (f.vh==="ALL"||i.van_hanh===f.vh) && 
                  (f.mc==="ALL"||i.moi_chat===f.mc) && 
@@ -229,6 +249,9 @@ function performSearchCond() {
     };
 
     const res = modelDatabaseCond.filter(i => {
+        if (searchStandardFilterCond === 'standard' && i.is_standard === false) {
+            return false;
+        }
         let ok = (f.dan==="ALL"||i.loai_dan===f.dan) && 
                  (f.mc==="ALL"||i.moi_chat===f.mc) && 
                  (f.ong==="ALL"||i.loai_ong===f.ong) && 

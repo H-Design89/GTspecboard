@@ -4,10 +4,11 @@ let tempCondDb = [];
 let tempDictionary = {};
 let currentAdminDb = 'evap';
 let editingModelId = null; // null = chế độ thêm mới, string = đang sửa
+let currentAdminTableFilter = 'standard';
 
 // Lấy danh sách key (thuộc tính) mẫu từ database để tạo form tự động
-const evapKeys = ["id", "model", "loai_dan", "kw", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "delta_t", "van_hanh", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "ghi_chu"];
-const condKeys = ["id", "model", "loai_dan", "kw", "hp", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "t_ngungtu", "t_wb", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "ghi_chu"];
+const evapKeys = ["id", "model", "loai_dan", "kw", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "delta_t", "van_hanh", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "is_standard", "ghi_chu"];
+const condKeys = ["id", "model", "loai_dan", "kw", "hp", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "t_ngungtu", "t_wb", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "is_standard", "ghi_chu"];
 
 // Khởi tạo dữ liệu khi vào trang admin
 function initAdminData() {
@@ -90,11 +91,19 @@ function renderAdminForm() {
             's_tdn': 'DTTĐN (m2)', 'tieu_chuan': 'Tiêu chuẩn (m2/kW)', 't_bayhoi': 'Tmc (°C)', 
             't_phong': 'Tr (°C)', 'delta_t': 'Delta T (K)', 't_ngungtu': 'Tc (°C)', 't_wb': 'Twb (°C)',
             'moi_chat': 'Môi chất', 'van_hanh': 'Vận hành', 'loai_ong': 'Loại ống', 'loai_canh': 'Lá tản nhiệt',
-            'v_wind': 'Tốc độ gió (m/s)', 'dk_quat': 'Đường kính quạt', 'sl_quat': 'Số lượng quạt'
+            'v_wind': 'Tốc độ gió (m/s)', 'dk_quat': 'Đường kính quạt', 'sl_quat': 'Số lượng quạt',
+            'is_standard': 'Thiết kế Tiêu chuẩn'
         };
         let labelText = keyLabels[key] || key.toUpperCase();
 
-        if (key === 'ghi_chu') {
+        if (key === 'is_standard') {
+            html += `
+                <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 25px;">
+                    <input type="checkbox" id="admin_input_is_standard" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);" checked>
+                    <label for="admin_input_is_standard" style="margin-bottom: 0; cursor: pointer; text-transform: none; font-weight: bold; color: var(--text-primary);">${labelText}</label>
+                </div>
+            `;
+        } else if (key === 'ghi_chu') {
             html += `
                 <div class="input-group" style="grid-column: 1 / -1;">
                     <label>GHI CHÚ:</label>
@@ -219,27 +228,87 @@ function deleteAdminDict(prefix) {
 }
 
 // --- RENDER BẢNG ---
+function setAdminTableFilter(filterVal) {
+    currentAdminTableFilter = filterVal;
+    
+    // Update active class on buttons
+    const btnStandard = document.getElementById('admin-filter-standard');
+    const btnAll = document.getElementById('admin-filter-all');
+    if (btnStandard && btnAll) {
+        if (filterVal === 'standard') {
+            btnStandard.classList.add('active');
+            btnAll.classList.remove('active');
+        } else {
+            btnStandard.classList.remove('active');
+            btnAll.classList.add('active');
+        }
+    }
+    
+    renderAdminTable();
+}
+
+function toggleItemStandard(id, checked) {
+    const db = currentAdminDb === 'evap' ? tempEvapDb : tempCondDb;
+    const item = db.find(i => i.id === id);
+    if (item) {
+        item.is_standard = checked;
+        
+        // Cập nhật database toàn cục tương ứng
+        if (currentAdminDb === 'evap') {
+            if (typeof modelDatabase !== 'undefined') {
+                const globalItem = modelDatabase.find(i => i.id === id);
+                if (globalItem) globalItem.is_standard = checked;
+            }
+        } else {
+            if (typeof modelDatabaseCond !== 'undefined') {
+                const globalItem = modelDatabaseCond.find(i => i.id === id);
+                if (globalItem) globalItem.is_standard = checked;
+            }
+        }
+        
+        // Load lại bảng
+        renderAdminTable();
+    }
+}
+
 function renderAdminTable() {
     const db = currentAdminDb === 'evap' ? tempEvapDb : tempCondDb;
     const keys = currentAdminDb === 'evap' ? evapKeys : condKeys;
     const tHead = document.getElementById('admin-table-head');
     const tBody = document.getElementById('admin-table-body');
     
-    document.getElementById('admin-db-count').innerText = `(${db.length})`;
+    // Áp dụng bộ lọc
+    let displayDb = db;
+    if (currentAdminTableFilter === 'standard') {
+        displayDb = db.filter(item => item.is_standard !== false);
+    }
+    
+    document.getElementById('admin-db-count').innerText = `(${displayDb.length})`;
 
     // Tạo Header
     let headHtml = '<tr><th>THAO TÁC</th>';
-    keys.forEach(k => headHtml += `<th>${k.toUpperCase()}</th>`);
+    const keyLabels = {
+        'model': 'Mã Model', 'loai_dan': 'Loại Dàn', 'kw': 'Công suất (kW)', 'hp': 'CS Máy (HP)',
+        's_tdn': 'DTTĐN (m2)', 'tieu_chuan': 'Tiêu chuẩn (m2/kW)', 't_bayhoi': 'Tmc (°C)', 
+        't_phong': 'Tr (°C)', 'delta_t': 'Delta T (K)', 't_ngungtu': 'Tc (°C)', 't_wb': 'Twb (°C)',
+        'moi_chat': 'Môi chất', 'van_hanh': 'Vận hành', 'loai_ong': 'Loại ống', 'loai_canh': 'Lá tản nhiệt',
+        'v_wind': 'Tốc độ gió (m/s)', 'dk_quat': 'Đường kính quạt', 'sl_quat': 'Số lượng quạt',
+        'is_standard': 'Tiêu chuẩn'
+    };
+    keys.forEach(k => {
+        const label = keyLabels[k] || k.toUpperCase();
+        headHtml += `<th>${label}</th>`;
+    });
     headHtml += '</tr>';
     tHead.innerHTML = headHtml;
 
     // Tạo Body
     let bodyHtml = '';
-    if (db.length === 0) {
+    if (displayDb.length === 0) {
         bodyHtml = `<tr><td colspan="${keys.length + 1}" class="no-data">Chưa có dữ liệu</td></tr>`;
     } else {
         // Render từ mới nhất đến cũ nhất
-        [...db].reverse().forEach(item => {
+        [...displayDb].reverse().forEach(item => {
             let rowHtml = `<tr>
                 <td style="white-space: nowrap;">
                     <button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="editAdminModel('${item.id}')">✏ Sửa</button>
@@ -247,7 +316,12 @@ function renderAdminTable() {
                     <button style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="deleteAdminModel('${item.id}')">🗑 Xóa</button>
                 </td>`;
             keys.forEach(k => {
-                if (k === 'ghi_chu') {
+                if (k === 'is_standard') {
+                    const isChecked = item[k] !== false;
+                    rowHtml += `<td style="text-align: center;">
+                        <input type="checkbox" class="compare-cb" ${isChecked ? 'checked' : ''} onchange="toggleItemStandard('${item.id}', this.checked)">
+                    </td>`;
+                } else if (k === 'ghi_chu') {
                     if (item[k] && item[k].trim() !== '') {
                         rowHtml += `<td style="text-align: center;"><span class="icon-info icon-note-active" onclick="showNoteModal(\`${item[k].replace(/`/g, '\\`')}\`)" title="Xem ghi chú">i</span></td>`;
                     } else {
@@ -263,7 +337,7 @@ function renderAdminTable() {
     }
     tBody.innerHTML = bodyHtml;
     
-    renderAdminStats(db);
+    renderAdminStats(displayDb);
 }
 
 // --- THỐNG KÊ DASHBOARD ---
@@ -342,7 +416,11 @@ function duplicateAdminModel(id) {
     keys.forEach(k => {
         const el = document.getElementById(`admin_input_${k}`);
         if (el) {
-            el.value = item[k] || '';
+            if (k === 'is_standard') {
+                el.checked = item[k] !== false;
+            } else {
+                el.value = item[k] || '';
+            }
         }
     });
     
@@ -376,7 +454,13 @@ function editAdminModel(id) {
 
     keys.forEach(k => {
         const el = document.getElementById(`admin_input_${k}`);
-        if (el) el.value = modelToEdit[k] !== null && modelToEdit[k] !== undefined ? modelToEdit[k] : '';
+        if (el) {
+            if (k === 'is_standard') {
+                el.checked = modelToEdit[k] !== false;
+            } else {
+                el.value = modelToEdit[k] !== null && modelToEdit[k] !== undefined ? modelToEdit[k] : '';
+            }
+        }
     });
     
     // Xử lý nút ghi chú
@@ -414,9 +498,13 @@ function resetAdminForm() {
     keys.forEach(k => {
         const el = document.getElementById(`admin_input_${k}`);
         if (el) {
-            el.value = '';
-            el.readOnly = false;
-            el.style.backgroundColor = 'white';
+            if (k === 'is_standard') {
+                el.checked = true;
+            } else {
+                el.value = '';
+                el.readOnly = false;
+                el.style.backgroundColor = 'white';
+            }
         }
     });
 
@@ -452,6 +540,12 @@ function saveAdminModel() {
     keys.forEach(k => {
         const inputEl = document.getElementById(`admin_input_${k}`);
         if (!inputEl) return;
+        
+        if (k === 'is_standard') {
+            newModel[k] = inputEl.checked;
+            return;
+        }
+
         const val = inputEl.value.trim();
         
         // Chuyển kiểu number nếu cần
