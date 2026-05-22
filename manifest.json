@@ -9,6 +9,12 @@
   "icons": [
     {
       "src": "logo_gt.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo_gt.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
