@@ -7,8 +7,8 @@ let editingModelId = null; // null = chế độ thêm mới, string = đang s�
 let currentAdminTableFilter = 'standard';
 
 // Lấy danh sách key (thuộc tính) mẫu từ database để tạo form tự động
-const evapKeys = ["id", "model", "loai_dan", "kw", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "delta_t", "van_hanh", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "is_standard", "ghi_chu"];
-const condKeys = ["id", "model", "loai_dan", "kw", "hp", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "t_ngungtu", "t_wb", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "is_standard", "ghi_chu"];
+const evapKeys = ["id", "is_standard", "model", "loai_dan", "kw", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "delta_t", "van_hanh", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "ghi_chu"];
+const condKeys = ["id", "is_standard", "model", "loai_dan", "kw", "hp", "s_tdn", "tieu_chuan", "t_bayhoi", "t_phong", "t_ngungtu", "t_wb", "moi_chat", "loai_ong", "loai_canh", "v_wind", "dk_quat", "sl_quat", "ghi_chu"];
 
 // Khởi tạo dữ liệu khi vào trang admin
 function initAdminData() {
@@ -98,17 +98,37 @@ function renderAdminForm() {
 
         if (key === 'is_standard') {
             html += `
-                <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 25px;">
+                <div class="input-group" style="order: 98; flex-direction: row; align-items: center; gap: 10px; padding-top: 25px;">
                     <input type="checkbox" id="admin_input_is_standard" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);" checked>
                     <label for="admin_input_is_standard" style="margin-bottom: 0; cursor: pointer; text-transform: none; font-weight: bold; color: var(--text-primary);">${labelText}</label>
                 </div>
             `;
         } else if (key === 'ghi_chu') {
             html += `
-                <div class="input-group" style="grid-column: 1 / -1;">
+                <div class="input-group" style="order: 99; grid-column: 1 / -1;">
                     <label>GHI CHÚ:</label>
                     <div id="admin_note_btn" class="admin-note-btn" onclick="toggleAdminNote()">+ Thêm ghi chú</div>
                     <textarea id="admin_input_ghi_chu" placeholder="Nhập nội dung ghi chú..." style="display: none; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; margin-top: 5px; resize: vertical; min-height: 80px;"></textarea>
+                </div>
+            `;
+        } else if (key === 'tieu_chuan') {
+            html += `
+                <div class="input-group">
+                    <label>${labelText}:</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="${type}" id="admin_input_${key}" placeholder="Auto (S/kW)..." readonly style="background-color: #f8f9fa; flex: 1;">
+                        <button id="btn_edit_tieu_chuan" type="button" style="padding: 0 10px; cursor:pointer; background:var(--bg); border-radius:4px; border:1px solid var(--border-color); color:var(--primary);" onclick="toggleEditTieuChuan()" title="Sửa thủ công">✏️</button>
+                    </div>
+                </div>
+            `;
+        } else if (key === 'delta_t') {
+            html += `
+                <div class="input-group">
+                    <label>${labelText}:</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="${type}" id="admin_input_${key}" placeholder="Auto (Tr - Tmc)..." readonly style="background-color: #f8f9fa; flex: 1;">
+                        <button id="btn_edit_delta_t" type="button" style="padding: 0 10px; cursor:pointer; background:var(--bg); border-radius:4px; border:1px solid var(--border-color); color:var(--primary);" onclick="toggleEditDeltaT()" title="Sửa thủ công">✏️</button>
+                    </div>
                 </div>
             `;
         } else {
@@ -122,6 +142,126 @@ function renderAdminForm() {
         }
     });
     container.innerHTML = html;
+    
+    // Attach event listeners for auto calculating 'tieu_chuan'
+    setTimeout(() => {
+        const inputS = document.getElementById('admin_input_s_tdn');
+        const inputKw = document.getElementById('admin_input_kw');
+        
+        if (inputS && inputKw) {
+            const calcFunc = () => {
+                const inputTc = document.getElementById('admin_input_tieu_chuan');
+                if (inputTc && inputTc.readOnly) {
+                    const s = parseFloat(inputS.value);
+                    const kw = parseFloat(inputKw.value);
+                    if (!isNaN(s) && !isNaN(kw) && kw !== 0) {
+                        inputTc.value = (s / kw).toFixed(2);
+                    } else {
+                        inputTc.value = '';
+                    }
+                }
+            };
+            inputS.addEventListener('input', calcFunc);
+            inputKw.addEventListener('input', calcFunc);
+        }
+
+        // Attach event listeners for auto calculating 'delta_t'
+        const inputTr = document.getElementById('admin_input_t_phong');
+        const inputTmc = document.getElementById('admin_input_t_bayhoi');
+        
+        if (inputTr && inputTmc) {
+            const calcDtFunc = () => {
+                const inputDt = document.getElementById('admin_input_delta_t');
+                if (inputDt && inputDt.readOnly) {
+                    const tr = parseFloat(inputTr.value);
+                    const tmc = parseFloat(inputTmc.value);
+                    if (!isNaN(tr) && !isNaN(tmc)) {
+                        inputDt.value = parseFloat((tr - tmc).toFixed(2));
+                    } else {
+                        inputDt.value = '';
+                    }
+                }
+            };
+            inputTr.addEventListener('input', calcDtFunc);
+            inputTmc.addEventListener('input', calcDtFunc);
+        }
+    }, 50);
+}
+
+function toggleEditTieuChuan() {
+    const inputTc = document.getElementById('admin_input_tieu_chuan');
+    const btn = document.getElementById('btn_edit_tieu_chuan');
+    if (!inputTc || !btn) return;
+    
+    if (inputTc.readOnly) {
+        inputTc.readOnly = false;
+        inputTc.style.backgroundColor = 'white';
+        btn.innerHTML = '🔄';
+        btn.title = 'Trở về Tự động';
+        btn.style.backgroundColor = '#fff3e0';
+        btn.style.borderColor = '#ffb74d';
+        btn.style.color = '#e65100';
+        inputTc.focus();
+    } else {
+        inputTc.readOnly = true;
+        inputTc.style.backgroundColor = '#f8f9fa';
+        btn.innerHTML = '✏️';
+        btn.title = 'Sửa thủ công';
+        btn.style.backgroundColor = 'var(--bg)';
+        btn.style.borderColor = 'var(--border-color)';
+        btn.style.color = 'var(--primary)';
+        
+        // Trigger auto calculation immediately
+        const inputS = document.getElementById('admin_input_s_tdn');
+        const inputKw = document.getElementById('admin_input_kw');
+        if (inputS && inputKw) {
+            const s = parseFloat(inputS.value);
+            const kw = parseFloat(inputKw.value);
+            if (!isNaN(s) && !isNaN(kw) && kw !== 0) {
+                inputTc.value = (s / kw).toFixed(2);
+            } else {
+                inputTc.value = '';
+            }
+        }
+    }
+}
+
+function toggleEditDeltaT() {
+    const inputDt = document.getElementById('admin_input_delta_t');
+    const btn = document.getElementById('btn_edit_delta_t');
+    if (!inputDt || !btn) return;
+    
+    if (inputDt.readOnly) {
+        inputDt.readOnly = false;
+        inputDt.style.backgroundColor = 'white';
+        btn.innerHTML = '🔄';
+        btn.title = 'Trở về Tự động';
+        btn.style.backgroundColor = '#fff3e0';
+        btn.style.borderColor = '#ffb74d';
+        btn.style.color = '#e65100';
+        inputDt.focus();
+    } else {
+        inputDt.readOnly = true;
+        inputDt.style.backgroundColor = '#f8f9fa';
+        btn.innerHTML = '✏️';
+        btn.title = 'Sửa thủ công';
+        btn.style.backgroundColor = 'var(--bg)';
+        btn.style.borderColor = 'var(--border-color)';
+        btn.style.color = 'var(--primary)';
+        
+        // Trigger auto calculation immediately
+        const inputTr = document.getElementById('admin_input_t_phong');
+        const inputTmc = document.getElementById('admin_input_t_bayhoi');
+        if (inputTr && inputTmc) {
+            const tr = parseFloat(inputTr.value);
+            const tmc = parseFloat(inputTmc.value);
+            if (!isNaN(tr) && !isNaN(tmc)) {
+                inputDt.value = parseFloat((tr - tmc).toFixed(2));
+            } else {
+                inputDt.value = '';
+            }
+        }
+    }
 }
 
 function toggleAdminNote() {
@@ -309,7 +449,7 @@ function renderAdminTable() {
     } else {
         // Render từ mới nhất đến cũ nhất
         [...displayDb].reverse().forEach(item => {
-            let rowHtml = `<tr>
+            let rowHtml = `<tr class="${item.is_standard === false ? 'non-standard-row' : ''}">
                 <td style="white-space: nowrap;">
                     <button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="editAdminModel('${item.id}')">✏ Sửa</button>
                     <button style="background:#0288d1; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="duplicateAdminModel('${item.id}')" title="Nhân bản Model">📑</button>
@@ -500,6 +640,20 @@ function resetAdminForm() {
         if (el) {
             if (k === 'is_standard') {
                 el.checked = true;
+            } else if (k === 'tieu_chuan' || k === 'delta_t') {
+                el.value = '';
+                el.readOnly = true;
+                el.style.backgroundColor = '#f8f9fa';
+                
+                // Reset edit button to Auto mode
+                const btn = document.getElementById(`btn_edit_${k}`);
+                if (btn) {
+                    btn.innerHTML = '✏️';
+                    btn.title = 'Sửa thủ công';
+                    btn.style.backgroundColor = 'var(--bg)';
+                    btn.style.borderColor = 'var(--border-color)';
+                    btn.style.color = 'var(--primary)';
+                }
             } else {
                 el.value = '';
                 el.readOnly = false;

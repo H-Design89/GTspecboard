@@ -20,13 +20,37 @@ function setSearchStandardFilter(type, filterVal, btnEl) {
         group.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
         btnEl.classList.add('active');
     }
+    markFilterChanged(type);
 }
+
+// Hàm đổi màu nút Quét khi có thay đổi bộ lọc
+function markFilterChanged(type) {
+    if (type === 'evap') {
+        const btn = document.getElementById('btn_scan_evap');
+        if (btn) btn.classList.remove('btn-scan-inactive');
+    } else {
+        const btn = document.getElementById('btn_scan_cond');
+        if (btn) btn.classList.remove('btn-scan-inactive');
+    }
+}
+
+// Gắn event listener cho tất cả các input bộ lọc
+document.addEventListener('DOMContentLoaded', () => {
+    // Lấy tất cả input trong grid-filter
+    const allFilters = document.querySelectorAll('.grid-filter input, .grid-filter select');
+    allFilters.forEach(el => {
+        // Dựa vào ID để biết thuộc tab nào
+        const type = el.id.includes('_c') ? 'cond' : 'evap';
+        el.addEventListener('input', () => markFilterChanged(type));
+        el.addEventListener('change', () => markFilterChanged(type));
+    });
+});
 
 // Khởi tạo Theme
 function initTheme() {
     if (localStorage.getItem('theme') === 'dark') {
         document.body.setAttribute('data-theme', 'dark');
-        document.getElementById('theme-toggle').innerText = '☀️';
+        document.getElementById('theme-toggle').innerText = '☀️ Day Mode';
     }
 }
 initTheme();
@@ -35,11 +59,11 @@ function toggleTheme() {
     if (document.body.getAttribute('data-theme') === 'dark') {
         document.body.removeAttribute('data-theme');
         localStorage.setItem('theme', 'light');
-        document.getElementById('theme-toggle').innerText = '🌙';
+        document.getElementById('theme-toggle').innerText = '🌙 Night Mode';
     } else {
         document.body.setAttribute('data-theme', 'dark');
         localStorage.setItem('theme', 'dark');
-        document.getElementById('theme-toggle').innerText = '☀️';
+        document.getElementById('theme-toggle').innerText = '☀️ Day Mode';
     }
 }
 
@@ -187,6 +211,13 @@ function performSearchEvap() {
 
 
     currentEvapRes = res;
+    
+    // Update count and button state
+    const countEl = document.getElementById('count_evap');
+    if (countEl) countEl.innerText = res.length;
+    const btn = document.getElementById('btn_scan_evap');
+    if (btn) btn.classList.add('btn-scan-inactive');
+    
     renderEvapTable();
 }
 
@@ -200,7 +231,7 @@ function renderEvapTable() {
     
     currentEvapRes.forEach(i => {
         const isChecked = compareList.some(c => c.id === i.id) ? 'checked' : '';
-        tbody.innerHTML += `<tr>
+        tbody.innerHTML += `<tr class="${i.is_standard === false ? 'non-standard-row' : ''}">
             <td><input type="checkbox" class="compare-cb" value="${i.id}" ${isChecked} onchange="toggleCompare('${i.id}', 'evap')"></td>
             <td class="highlight"><div class="model-container">${i.model}</div></td>
             <td class="val-success">${fmt(i.kw)}</td>
@@ -220,6 +251,34 @@ function renderEvapTable() {
             </td>
         </tr>`;
     });
+}
+
+function clearFiltersEvap() {
+    document.getElementById('f_dan').value = "ALL";
+    document.getElementById('f_vh').value = "ALL";
+    document.getElementById('f_mc').value = "ALL";
+    document.getElementById('f_ong').value = "ALL";
+    document.getElementById('f_canh').value = "ALL";
+    
+    document.getElementById('f_te').value = "";
+    document.getElementById('f_tr').value = "";
+    document.getElementById('f_dt').value = "";
+    document.getElementById('f_q_dk').value = "";
+    document.getElementById('f_id_prefix').value = "";
+    
+    document.getElementById('f_kw').value = "";
+    document.getElementById('f_tol').value = "10";
+    document.getElementById('f_s').value = "";
+    document.getElementById('f_tc').value = "";
+    
+    setSearchStandardFilter('evap', 'standard', document.getElementById('f_std_evap_standard'));
+    
+    currentEvapRes = [];
+    document.getElementById('result-evap').innerHTML = `<tr><td colspan="12" class="no-data">Bấm "Quét Dữ Liệu" để bắt đầu...</td></tr>`;
+    
+    const countEl = document.getElementById('count_evap');
+    if (countEl) countEl.innerText = '0';
+    markFilterChanged('evap');
 }
 
 // --- TÌM KIẾM DÀN NGƯNG TỤ ---
@@ -271,6 +330,13 @@ function performSearchCond() {
     });
 
     currentCondRes = res;
+    
+    // Update count and button state
+    const countEl = document.getElementById('count_cond');
+    if (countEl) countEl.innerText = res.length;
+    const btn = document.getElementById('btn_scan_cond');
+    if (btn) btn.classList.add('btn-scan-inactive');
+    
     renderCondTable();
 }
 
@@ -284,7 +350,7 @@ function renderCondTable() {
     
     currentCondRes.forEach(i => {
         const isChecked = compareList.some(c => c.id === i.id) ? 'checked' : '';
-        tbody.innerHTML += `<tr>
+        tbody.innerHTML += `<tr class="${i.is_standard === false ? 'non-standard-row' : ''}">
             <td><input type="checkbox" class="compare-cb" value="${i.id}" ${isChecked} onchange="toggleCompare('${i.id}', 'cond')"></td>
             <td class="highlight"><div class="model-container">${i.model}</div></td>
             <td class="val-warning">${fmt(i.kw)}</td>
@@ -305,6 +371,34 @@ function renderCondTable() {
             </td>
         </tr>`;
     });
+}
+
+function clearFiltersCond() {
+    document.getElementById('f_dan_c').value = "ALL";
+    document.getElementById('f_mc_c').value = "ALL";
+    document.getElementById('f_ong_c').value = "ALL";
+    document.getElementById('f_canh_c').value = "ALL";
+    
+    document.getElementById('f_te_c').value = "";
+    document.getElementById('f_tr_c').value = "";
+    document.getElementById('f_tc_cond').value = "";
+    document.getElementById('f_twb').value = "";
+    document.getElementById('f_q_dk_c').value = "";
+    document.getElementById('f_id_prefix_c').value = "";
+    
+    document.getElementById('f_kw_c').value = "";
+    document.getElementById('f_tol_c').value = "10";
+    document.getElementById('f_hp_c').value = "";
+    document.getElementById('f_s_c').value = "";
+    
+    setSearchStandardFilter('cond', 'standard', document.getElementById('f_std_cond_standard'));
+    
+    currentCondRes = [];
+    document.getElementById('result-cond').innerHTML = `<tr><td colspan="15" class="no-data">Bấm "Quét Dữ Liệu" để bắt đầu...</td></tr>`;
+    
+    const countEl = document.getElementById('count_cond');
+    if (countEl) countEl.innerText = '0';
+    markFilterChanged('cond');
 }
 
 // --- MODAL GHI CHÚ ---

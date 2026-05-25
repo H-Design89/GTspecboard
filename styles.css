@@ -2,7 +2,8 @@
     --primary: #1a73e8;
     --secondary: #004ba0;
     --accent: #d93025;
-    --bg: #f1f3f4;
+    --bg-gradient: linear-gradient(135deg, #d8e0e8 0%, #c1cdd8 100%);
+    --bg: #d8e0e8;
     --card: #ffffff;
     --success: #0f9d58;
     --tab-bg: #e8f0fe;
@@ -19,17 +20,19 @@
     --accent: #fb7185;
     --warning: #fbbf24;
     --success: #34d399;
-    --bg: #0f172a;
-    --card: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --border-color: #334155;
-    --header-bg: linear-gradient(135deg, #0f172a, #1e293b);
+    --bg-gradient: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+    --bg: #121212;
+    --card: #1e1e1e;
+    --text-primary: #e0e0e0;
+    --text-secondary: #aaaaaa;
+    --border-color: #333333;
+    --header-bg: linear-gradient(135deg, #0f0f0f, #1a1a1a);
 }
 
 body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
+    background: var(--bg-gradient);
+    min-height: 100vh;
     margin: 0;
     padding: 10px;
     color: var(--text-primary);
@@ -47,16 +50,24 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(236, 239, 241, 0.95);
-    backdrop-filter: blur(5px);
+    background: linear-gradient(-45deg, #ffffff, #d8e0e8, #1a73e8, #e8f0fe);
+    background-size: 400% 400%;
+    animation: gradientBG 12s ease infinite;
     z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 .lock-box {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -334,33 +345,99 @@ select:focus {
 
 .btn-search {
     width: 100%;
-    padding: 15px;
+    padding: 10px;
     background: var(--primary);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
+    font-size: 1rem;
     font-weight: bold;
-    font-size: 1.1rem;
     cursor: pointer;
-    text-transform: uppercase;
-    margin-top: 10px;
-    transition: background-color 0.3s, transform 0.1s;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(26, 115, 232, 0.2);
 }
 
 .btn-search:hover {
     background: var(--secondary);
-}
-
-.btn-search:active {
-    transform: scale(0.99);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(26, 115, 232, 0.3);
 }
 
 .btn-search-warning {
-    background: #e65100;
+    background: #ff9800;
+    box-shadow: 0 4px 6px rgba(255, 152, 0, 0.2);
 }
 
 .btn-search-warning:hover {
-    background: #bf360c;
+    background: #f57c00;
+    box-shadow: 0 6px 12px rgba(255, 152, 0, 0.3);
+}
+
+.btn-scan-inactive {
+    background: #94a3b8 !important;
+    cursor: default;
+    box-shadow: none !important;
+    transform: none !important;
+}
+[data-theme="dark"] .btn-scan-inactive {
+    background: #475569 !important;
+    color: #94a3b8 !important;
+}
+
+/* COUNT BOXES */
+.result-counter-evap {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 0 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.95rem;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-transform: uppercase;
+}
+
+.result-counter-evap span {
+    margin-left: 6px;
+    color: white;
+    font-size: 1.1rem;
+}
+
+[data-theme="dark"] .result-counter-evap {
+    background: var(--primary);
+    color: white;
+}
+
+.result-counter-cond {
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 0 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.95rem;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-transform: uppercase;
+}
+
+.result-counter-cond span {
+    margin-left: 6px;
+    color: white;
+    font-size: 1.1rem;
+}
+
+[data-theme="dark"] .result-counter-cond {
+    background: #ff9800;
+    color: white;
 }
 
 /* BẢNG KẾT QUẢ VÀ SCROLL */
@@ -829,4 +906,95 @@ th[data-sort]:active {
 [data-theme="dark"] .toggle-btn.active {
     background: var(--primary);
     color: white;
+}
+
+/* --- HÀNG KHÔNG TIÊU CHUẨN --- */
+/* Màu nền cam nhạt cho toàn bộ hàng */
+.result-table tbody tr.non-standard-row,
+.result-table tbody tr.non-standard-row td {
+    background-color: #ffe0b2 !important;
+}
+
+/* Hiệu ứng hover cho hàng không tiêu chuẩn */
+.result-table tbody tr.non-standard-row:hover,
+.result-table tbody tr.non-standard-row:hover td {
+    background-color: #ffcc80 !important;
+}
+
+/* Giao diện tối cho hàng không tiêu chuẩn */
+[data-theme="dark"] .result-table tbody tr.non-standard-row,
+[data-theme="dark"] .result-table tbody tr.non-standard-row td {
+    background-color: #794a00 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .result-table tbody tr.non-standard-row:hover,
+[data-theme="dark"] .result-table tbody tr.non-standard-row:hover td {
+    background-color: #9e5d00 !important;
+}
+
+/* SETTINGS DROPDOWN */
+.settings-dropdown {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+.settings-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    padding: 0 15px;
+    margin: 0;
+    transition: transform 0.3s ease;
+}
+.settings-btn:hover {
+    transform: rotate(45deg);
+}
+.settings-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 15px;
+    background: var(--card);
+    min-width: 180px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+.settings-menu.show {
+    display: block;
+    animation: fadeInDown 0.2s ease-out;
+}
+.settings-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 15px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.settings-menu-item:last-child {
+    border-bottom: none;
+}
+.settings-menu-item:hover {
+    background: var(--bg);
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
