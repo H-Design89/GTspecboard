@@ -1,4 +1,7 @@
 // --- UI LOGIC ---
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyhyeI6nnuN4NwQ78FHc2wSO_lxJuCYLAwRUfCP0hjqhDs2P0obgIs0lq4Eu1rK58pMpA/exec';
+
+let globalData = {}; // Lưu toàn bộ data tải từ cloud
 let compareList = [];
 let currentEvapRes = [];
 let currentCondRes = [];
@@ -6,6 +9,137 @@ let sortCol = '';
 let sortAsc = true;
 let searchStandardFilterEvap = 'standard';
 let searchStandardFilterCond = 'standard';
+
+// Hàm đóng/mở form Login
+function showLoginScreen() {
+    document.getElementById('lock-screen').style.display = 'flex';
+}
+
+function hideLoginScreen() {
+    document.getElementById('lock-screen').style.display = 'none';
+}
+
+function logoutSystem() {
+    sessionStorage.removeItem('gtspec_role');
+    sessionStorage.removeItem('gtspec_username');
+    window.location.reload();
+}
+
+// --- CUSTOM MODAL (THAY THẾ ALERT & CONFIRM) ---
+window.customAlert = function(msg) {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('custom-modal-overlay');
+        if (!overlay) return resolve(); // Fallback if HTML missing
+        const msgEl = document.getElementById('custom-modal-message');
+        const btnOk = document.getElementById('custom-modal-btn-ok');
+        const btnCancel = document.getElementById('custom-modal-btn-cancel');
+        
+        msgEl.innerText = msg;
+        btnCancel.style.display = 'none';
+        overlay.style.display = 'flex';
+        
+        const closeMod = () => {
+            overlay.style.display = 'none';
+            btnOk.removeEventListener('click', closeMod);
+            resolve();
+        };
+        btnOk.addEventListener('click', closeMod);
+    });
+};
+
+window.customConfirm = function(msg) {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('custom-modal-overlay');
+        if (!overlay) return resolve(false);
+        const msgEl = document.getElementById('custom-modal-message');
+        const btnOk = document.getElementById('custom-modal-btn-ok');
+        const btnCancel = document.getElementById('custom-modal-btn-cancel');
+        
+        msgEl.innerText = msg;
+        btnCancel.style.display = 'inline-block';
+        overlay.style.display = 'flex';
+        
+        const handleOk = () => closeMod(true);
+        const handleCancel = () => closeMod(false);
+        
+        const closeMod = (result) => {
+            overlay.style.display = 'none';
+            btnOk.removeEventListener('click', handleOk);
+            btnCancel.removeEventListener('click', handleCancel);
+            resolve(result);
+        };
+        
+        btnOk.addEventListener('click', handleOk);
+        btnCancel.addEventListener('click', handleCancel);
+    });
+};
+
+// Khởi tạo ứng dụng
+async function initApp() {
+    // 1. Kiểm tra trạng thái đăng nhập bắt buộc
+    const role = sessionStorage.getItem('gtspec_role');
+    if (!role) {
+        // Chưa đăng nhập -> Hiện màn hình khóa, không cho vào ứng dụng
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('lock-screen').style.display = 'flex';
+        document.getElementById('main-app').style.display = 'none';
+        return; // Dừng tại đây
+    }
+
+    // Đã đăng nhập -> Cấu hình giao diện dựa trên Role
+    const roleLower = role.trim().toLowerCase();
+    
+    if (roleLower === 'admin' || roleLower === 'editor') {
+        document.getElementById('admin-tab-btn').style.display = 'inline-block';
+    } else {
+        document.getElementById('admin-tab-btn').style.display = 'none';
+    }
+    
+    const roleDisplay = document.getElementById('user-role-display');
+    if (roleDisplay) {
+        roleDisplay.innerText = "👤 " + role.toUpperCase();
+    }
+    
+    // Luôn hiện nút đăng xuất
+    const btnLogout = document.getElementById('btn-logout');
+    if(btnLogout) btnLogout.style.display = 'inline-block';
+
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        globalData = data;
+
+        // Cập nhật mảng tĩnh cũ để tương thích với các hàm search cũ
+        // Chỉ ghi đè nếu Cloud thực sự có dữ liệu (để tránh xóa trắng dữ liệu cũ khi chưa đồng bộ)
+        if (data.evap && data.evap.length > 0) modelDatabase = data.evap;
+        if (data.cond && data.cond.length > 0) modelDatabaseCond = data.cond;
+        if (data.dict && Object.keys(data.dict).length > 0) customerDictionary = data.dict;
+
+        // Xử lý các tab động (những sheet ngoài EVAP, COND, DICT)
+        renderDynamicTabs(data);
+
+        // Khởi tạo dữ liệu filter
+        if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
+        
+        // Ẩn Loading và Hiển thị App
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('lock-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        
+    } catch (err) {
+        console.error("Lỗi tải dữ liệu:", err);
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('lock-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
+    }
+}
+
+// Gọi initApp khi trang tải xong
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+});
+
 
 function setSearchStandardFilter(type, filterVal, btnEl) {
     if (type === 'evap') {
@@ -78,6 +212,12 @@ function switchTab(tabId, element) {
     } else {
         // Fallback for direct calls without element reference
         document.querySelector(`.nav-tab[onclick*="${tabId}"]`).classList.add('active');
+    }
+    
+    // Gọi khởi tạo dữ liệu cho tab Admin nếu được chọn
+    if (tabId === 'admin') {
+        if (typeof initAdminData === 'function') initAdminData();
+        if (typeof changeAdminDb === 'function') changeAdminDb();
     }
 }
 
@@ -187,9 +327,16 @@ function performSearchEvap() {
     };
 
     const res = modelDatabase.filter(i => {
-        if (searchStandardFilterEvap === 'standard' && i.is_standard === false) {
-            return false;
+        if (searchStandardFilterEvap === 'standard') {
+            if (i.is_standard === 'custom' || String(i.is_standard).toLowerCase() === 'false') return false;
         }
+        if (searchStandardFilterEvap === 'sample') {
+            if (i.is_standard === 'custom' || String(i.is_standard).toLowerCase() !== 'false') return false;
+        }
+        if (searchStandardFilterEvap === 'custom') {
+            if (i.is_standard !== 'custom') return false;
+        }
+        
         let ok = (f.dan==="ALL"||i.loai_dan===f.dan) && 
                  (f.vh==="ALL"||i.van_hanh===f.vh) && 
                  (f.mc==="ALL"||i.moi_chat===f.mc) && 
@@ -231,7 +378,14 @@ function renderEvapTable() {
     
     currentEvapRes.forEach(i => {
         const isChecked = compareList.some(c => c.id === i.id) ? 'checked' : '';
-        tbody.innerHTML += `<tr class="${i.is_standard === false ? 'non-standard-row' : ''}">
+        const isCustom = i.is_standard === 'custom';
+        const isStd = !isCustom && String(i.is_standard).toLowerCase() !== 'false';
+        
+        let rowClass = '';
+        if (isCustom) rowClass = 'custom-design-row';
+        else if (!isStd) rowClass = 'non-standard-row';
+        
+        tbody.innerHTML += `<tr class="${rowClass}">
             <td><input type="checkbox" class="compare-cb" value="${i.id}" ${isChecked} onchange="toggleCompare('${i.id}', 'evap')"></td>
             <td class="highlight"><div class="model-container">${i.model}</div></td>
             <td class="val-success">${fmt(i.kw)}</td>
@@ -284,7 +438,7 @@ function clearFiltersEvap() {
 // --- TÌM KIẾM DÀN NGƯNG TỤ ---
 function performSearchCond() {
     if (typeof modelDatabaseCond === 'undefined') {
-        alert("Chưa có file data_01.js");
+        customAlert("Chưa có file data_01.js");
         return;
     }
     
@@ -308,9 +462,16 @@ function performSearchCond() {
     };
 
     const res = modelDatabaseCond.filter(i => {
-        if (searchStandardFilterCond === 'standard' && i.is_standard === false) {
-            return false;
+        if (searchStandardFilterCond === 'standard') {
+            if (i.is_standard === 'custom' || String(i.is_standard).toLowerCase() === 'false') return false;
         }
+        if (searchStandardFilterCond === 'sample') {
+            if (i.is_standard === 'custom' || String(i.is_standard).toLowerCase() !== 'false') return false;
+        }
+        if (searchStandardFilterCond === 'custom') {
+            if (i.is_standard !== 'custom') return false;
+        }
+        
         let ok = (f.dan==="ALL"||i.loai_dan===f.dan) && 
                  (f.mc==="ALL"||i.moi_chat===f.mc) && 
                  (f.ong==="ALL"||i.loai_ong===f.ong) && 
@@ -350,7 +511,14 @@ function renderCondTable() {
     
     currentCondRes.forEach(i => {
         const isChecked = compareList.some(c => c.id === i.id) ? 'checked' : '';
-        tbody.innerHTML += `<tr class="${i.is_standard === false ? 'non-standard-row' : ''}">
+        const isCustom = i.is_standard === 'custom';
+        const isStd = !isCustom && String(i.is_standard).toLowerCase() !== 'false';
+        
+        let rowClass = '';
+        if (isCustom) rowClass = 'custom-design-row';
+        else if (!isStd) rowClass = 'non-standard-row';
+        
+        tbody.innerHTML += `<tr class="${rowClass}">
             <td><input type="checkbox" class="compare-cb" value="${i.id}" ${isChecked} onchange="toggleCompare('${i.id}', 'cond')"></td>
             <td class="highlight"><div class="model-container">${i.model}</div></td>
             <td class="val-warning">${fmt(i.kw)}</td>
@@ -461,7 +629,7 @@ function toggleCompare(id, type) {
     
     if (isChecked) {
         if (compareList.length >= 4) {
-            alert("Chỉ so sánh tối đa 4 thiết bị cùng lúc!");
+            customAlert("Chỉ so sánh tối đa 4 thiết bị cùng lúc!");
             if(cb) cb.checked = false;
             return;
         }
@@ -536,4 +704,115 @@ function showCompareModal() {
 
 function closeCompareModal() {
     document.getElementById('compare-modal').style.display = 'none';
+}
+
+// --- DYNAMIC TABS LOGIC ---
+function renderDynamicTabs(data) {
+    const navTabs = document.querySelector('.nav-tabs');
+    const appContainer = document.querySelector('.app-container');
+    const knownKeys = ['evap', 'cond', 'dict', 'users', 'eva'];
+    
+    Object.keys(data).forEach(key => {
+        if (!knownKeys.includes(key)) {
+            const tabId = key.toLowerCase();
+            const tabName = key.toUpperCase();
+            
+            // Nếu chưa có nút tab, thêm vào
+            if (!document.querySelector(`.nav-tab[onclick*="switchTab('${tabId}'"]`)) {
+                const btn = document.createElement('button');
+                btn.className = 'nav-tab';
+                btn.onclick = function() { switchTab(tabId, this); };
+                btn.innerText = tabName;
+                
+                // Chèn trước nút Admin
+                const adminBtn = document.getElementById('admin-tab-btn');
+                navTabs.insertBefore(btn, adminBtn);
+            }
+            
+            // Nếu chưa có page, thêm vào
+            if (!document.getElementById(`page-${tabId}`)) {
+                const pageHtml = `
+                <div id="page-${tabId}" class="app-page">
+                    <div class="card-panel">
+                        <div class="section-title">BỘ LỌC THÔNG MINH - ${tabName}</div>
+                        <div class="grid-filter" style="grid-template-columns: 1fr auto;">
+                            <div class="input-group">
+                                <input type="text" id="f_smart_${tabId}" placeholder="Nhập bất kỳ từ khóa nào để tìm kiếm (Mã ID, Công suất, Loại...)" style="border-color: var(--primary); font-size: 1rem; padding: 10px;">
+                            </div>
+                            <button class="btn-search" style="margin-top: 0; padding: 10px 20px;" onclick="performSmartSearch('${tabId}')">🔍 QUÉT DỮ LIỆU</button>
+                        </div>
+                        <div class="result-counter-evap" style="margin-top: 10px; text-align: right;">
+                            Kết quả: <span id="count_${tabId}">0</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="result-table">
+                            <thead id="head_${tabId}"></thead>
+                            <tbody id="result_${tabId}">
+                                <tr><td colspan="10" class="no-data">Bấm "Quét Dữ Liệu" để bắt đầu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                `;
+                
+                // Tạo div container bọc nội dung và append
+                const div = document.createElement('div');
+                div.innerHTML = pageHtml;
+                // Chèn trước page-admin
+                const adminPage = document.getElementById('page-admin');
+                appContainer.insertBefore(div.firstElementChild, adminPage);
+                
+                // Vẽ header cho bảng
+                renderDynamicTableHead(tabId, data[key]);
+            }
+        }
+    });
+}
+
+function renderDynamicTableHead(tabId, tabData) {
+    if (!tabData || tabData.length === 0) return;
+    const keys = Object.keys(tabData[0]);
+    const thead = document.getElementById(`head_${tabId}`);
+    let html = '<tr>';
+    keys.forEach(k => {
+        html += `<th>${k.toUpperCase()}</th>`;
+    });
+    html += '</tr>';
+    thead.innerHTML = html;
+}
+
+function performSmartSearch(tabId) {
+    const term = document.getElementById(`f_smart_${tabId}`).value.toLowerCase().trim();
+    const tabData = globalData[tabId] || [];
+    
+    let res = tabData;
+    if (term !== "") {
+        res = tabData.filter(item => {
+            return Object.values(item).some(val => 
+                val !== null && val !== undefined && val.toString().toLowerCase().includes(term)
+            );
+        });
+    }
+    
+    document.getElementById(`count_${tabId}`).innerText = res.length;
+    
+    const tbody = document.getElementById(`result_${tabId}`);
+    tbody.innerHTML = '';
+    
+    if (res.length === 0) {
+        const cols = Object.keys(tabData[0] || {}).length || 10;
+        tbody.innerHTML = `<tr><td colspan="${cols}" class="no-data">Không tìm thấy dữ liệu phù hợp.</td></tr>`;
+        return;
+    }
+    
+    const keys = Object.keys(res[0]);
+    res.forEach(item => {
+        let tr = `<tr>`;
+        keys.forEach(k => {
+            tr += `<td>${item[k] !== null ? item[k] : ''}</td>`;
+        });
+        tr += `</tr>`;
+        tbody.innerHTML += tr;
+    });
 }

@@ -97,15 +97,14 @@ body {
 
 .lock-box input {
     width: 100%;
-    padding: 15px;
-    margin: 15px 0;
-    font-size: 1.5rem;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 1rem;
     text-align: center;
-    letter-spacing: 5px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     outline: none;
-    font-weight: bold;
+    font-weight: 500;
     box-sizing: border-box;
     transition: border-color 0.2s;
 }
@@ -910,22 +909,42 @@ th[data-sort]:active {
 
 /* --- HÀNG KHÔNG TIÊU CHUẨN --- */
 /* Màu nền cam nhạt cho toàn bộ hàng */
+.result-table tbody tr.custom-design-row,
+.result-table tbody tr.custom-design-row td {
+    background-color: #f1f8ff; /* Light blue for custom design */
+}
+
 .result-table tbody tr.non-standard-row,
 .result-table tbody tr.non-standard-row td {
     background-color: #ffe0b2 !important;
 }
 
 /* Hiệu ứng hover cho hàng không tiêu chuẩn */
+.result-table tbody tr.custom-design-row:hover,
+.result-table tbody tr.custom-design-row:hover td {
+    background-color: #e1f0ff;
+}
+
 .result-table tbody tr.non-standard-row:hover,
 .result-table tbody tr.non-standard-row:hover td {
     background-color: #ffcc80 !important;
 }
 
 /* Giao diện tối cho hàng không tiêu chuẩn */
+[data-theme="dark"] .result-table tbody tr.custom-design-row,
+[data-theme="dark"] .result-table tbody tr.custom-design-row td {
+    background-color: rgba(33, 150, 243, 0.15); /* Light blue tint for dark mode */
+}
+
 [data-theme="dark"] .result-table tbody tr.non-standard-row,
 [data-theme="dark"] .result-table tbody tr.non-standard-row td {
     background-color: #794a00 !important;
     color: #ffffff !important;
+}
+
+[data-theme="dark"] .result-table tbody tr.custom-design-row:hover,
+[data-theme="dark"] .result-table tbody tr.custom-design-row:hover td {
+    background-color: rgba(33, 150, 243, 0.25);
 }
 
 [data-theme="dark"] .result-table tbody tr.non-standard-row:hover,
@@ -994,7 +1013,47 @@ th[data-sort]:active {
 .settings-menu-item:hover {
     background: var(--bg);
 }
+}
 @keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* CUSTOM ALERT/CONFIRM MODAL */
+#custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInModal 0.2s ease-out;
+}
+
+.custom-modal-box {
+    background: var(--card);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 400px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    animation: scaleInModal 0.2s ease-out;
+}
+
+@keyframes scaleInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }

@@ -13,7 +13,6 @@ const condKeys = ["id", "is_standard", "model", "loai_dan", "kw", "hp", "s_tdn",
 // Khởi tạo dữ liệu khi vào trang admin
 function initAdminData() {
     if (typeof modelDatabase !== 'undefined') {
-        // Deep copy để không ảnh hưởng dữ liệu cũ khi chưa bấm lưu
         tempEvapDb = JSON.parse(JSON.stringify(modelDatabase)); 
     }
     if (typeof modelDatabaseCond !== 'undefined') {
@@ -26,27 +25,169 @@ function initAdminData() {
     }
 }
 
-// --- ĐĂNG NHẬP ---
-function loginAdmin() {
-    const id = document.getElementById('admin-id').value;
-    const pass = document.getElementById('admin-pass').value;
-
-    if (id === 'admin' && pass === 'zodiac1612@') {
-        document.getElementById('admin-login').style.display = 'none';
-        document.getElementById('admin-dashboard').style.display = 'block';
-        initAdminData();
-        changeAdminDb(); // Load dữ liệu mặc định
-        initPinManager(); // Load danh sách mã PIN
-        renderAdminDict(); // Load từ điển
-    } else {
-        document.getElementById('admin-error').style.display = 'block';
-        setTimeout(() => document.getElementById('admin-error').style.display = 'none', 3000);
+// --- FORMAT TIME ---
+function formatDateTime(isoString) {
+    if (!isoString) return 'Không rõ';
+    try {
+        const date = new Date(isoString);
+        return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + 
+               date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch(e) {
+        return 'Lỗi ngày';
     }
 }
 
-document.getElementById('admin-pass').addEventListener('keypress', e => {
-    if(e.key === 'Enter') loginAdmin();
-});
+// --- AUTH & CLOUD SYNC ---
+async function loginSystem() {
+    const user = document.getElementById('login-username').value;
+    const pass = document.getElementById('login-password').value;
+    const btn = document.getElementById('btn-login-submit');
+    const err = document.getElementById('login-error');
+    
+    if (!user) {
+        err.innerText = "Vui lòng nhập tài khoản";
+        err.style.display = 'block';
+        return;
+    }
+    
+    btn.innerText = "ĐANG KIỂM TRA...";
+    btn.disabled = true;
+    
+    
+    
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "login", username: user, password: pass })
+        });
+        const result = await res.json();
+        
+        if (result.status === 'success') {
+            sessionStorage.setItem('gtspec_role', result.role);
+            sessionStorage.setItem('gtspec_username', user);
+            window.location.reload(); 
+        } else {
+            err.innerText = result.message || "Sai tài khoản hoặc mật khẩu";
+            err.style.display = 'block';
+            btn.innerText = "ĐĂNG NHẬP";
+            btn.disabled = false;
+        }
+    } catch (e) {
+        err.innerText = "Lỗi kết nối máy chủ";
+        err.style.display = 'block';
+        btn.innerText = "ĐĂNG NHẬP";
+        btn.disabled = false;
+    }
+}
+
+async function syncToCloud(silent = false) {
+    const inlineStatus = document.getElementById('inline-sync-status');
+    if (!silent) {
+        if (inlineStatus) {
+            inlineStatus.style.display = 'flex';
+            inlineStatus.style.color = 'var(--primary)';
+            inlineStatus.innerHTML = '<div class="loader" style="width: 12px; height: 12px; border-width: 2px; min-width: 12px;"></div> ĐANG LƯU...';
+        } else {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'flex';
+                const loadingH3 = document.querySelector('#loading-screen h3');
+                if (loadingH3) loadingH3.innerText = "ĐANG ĐỒNG BỘ LÊN CLOUD...";
+            }
+        }
+    }
+    
+    const normalizeDB = (db, keys) => {
+        if (!db) return [];
+        return db.map(item => {
+            const normalized = {};
+            keys.forEach(k => {
+                if (k === 'is_standard') {
+                    // Cố định giá trị true/false, mặc định là true nếu cũ, hỗ trợ "custom"
+                    if (item[k] === 'custom') {
+                        normalized[k] = 'custom';
+                    } else {
+                        normalized[k] = item[k] !== undefined ? (String(item[k]).toLowerCase() !== 'false') : true;
+                    }
+                } else {
+                    normalized[k] = item[k] !== undefined && item[k] !== null ? item[k] : "";
+                }
+            });
+            // Giữ lại các trường metadata
+            if (item.createdBy) normalized.createdBy = item.createdBy;
+            if (item.createdAt) normalized.createdAt = item.createdAt;
+            if (item.updatedAt) normalized.updatedAt = item.updatedAt;
+            return normalized;
+        });
+    };
+
+    const payload = {
+        evap: normalizeDB(modelDatabase, evapKeys),
+        cond: normalizeDB(modelDatabaseCond, condKeys),
+        dict: customerDictionary || {}
+    };
+    
+    Object.keys(globalData).forEach(key => {
+        if (!['evap', 'cond', 'dict', 'users'].includes(key)) {
+            payload[key] = globalData[key];
+        }
+    });
+
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "sync", payload: payload })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            if (inlineStatus) {
+                inlineStatus.style.color = 'var(--success, #4caf50)';
+                inlineStatus.innerHTML = '✅ Dữ liệu đã đồng bộ';
+            }
+        } else {
+            if (inlineStatus) {
+                inlineStatus.style.color = 'var(--danger, #f44336)';
+                inlineStatus.innerHTML = '❌ Lỗi đồng bộ';
+            }
+        }
+    } catch (e) {
+        if (inlineStatus) {
+            inlineStatus.style.color = 'var(--danger, #f44336)';
+            inlineStatus.innerHTML = '❌ Lỗi kết nối';
+        }
+    } finally {
+        if (!silent) {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) loadingScreen.style.display = 'none';
+        }
+    }
+}
+
+async function syncOldData() {
+    if (await customConfirm("Thao tác này sẽ đẩy toàn bộ dữ liệu từ file tĩnh cũ lên Google Sheets. Bạn có chắc chắn không?")) {
+        syncToCloud(false);
+    }
+}
+
+function addNewSheet() {
+    const role = sessionStorage.getItem('gtspec_role') ? sessionStorage.getItem('gtspec_role').trim().toLowerCase() : '';
+    if (role !== 'admin') {
+        customAlert("Chỉ Admin mới có quyền tạo Sheet mới!");
+        return;
+    }
+    const name = document.getElementById('admin-sheet-name').value.trim().toUpperCase();
+    if (!name) {
+        customAlert("Vui lòng nhập tên Sheet");
+        return;
+    }
+    if (['EVAP', 'COND', 'DICT', 'USERS'].includes(name)) {
+        customAlert("Tên này đã tồn tại hoặc là từ khóa hệ thống.");
+        return;
+    }
+    
+    globalData[name.toLowerCase()] = [{ id: "SAMPLE-01", model: "Sample Item", createdBy: sessionStorage.getItem('gtspec_username') }];
+    syncToCloud(false);
+}
 
 // --- CHUYỂN ĐỔI DATABASE QUẢN LÝ ---
 function changeAdminDb() {
@@ -54,6 +195,7 @@ function changeAdminDb() {
     resetAdminForm();
     renderAdminForm();
     renderAdminTable();
+    if (typeof renderAdminDict === 'function') renderAdminDict();
 }
 
 // --- RENDER FORM ---
@@ -98,9 +240,13 @@ function renderAdminForm() {
 
         if (key === 'is_standard') {
             html += `
-                <div class="input-group" style="order: 98; flex-direction: row; align-items: center; gap: 10px; padding-top: 25px;">
-                    <input type="checkbox" id="admin_input_is_standard" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);" checked>
-                    <label for="admin_input_is_standard" style="margin-bottom: 0; cursor: pointer; text-transform: none; font-weight: bold; color: var(--text-primary);">${labelText}</label>
+                <div class="input-group" style="order: 98;">
+                    <label style="font-weight: bold;">${labelText}:</label>
+                    <select id="admin_input_is_standard" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: white;">
+                        <option value="true">Tiêu chuẩn</option>
+                        <option value="false">Dàn mẫu</option>
+                        <option value="custom">Thiết kế riêng</option>
+                    </select>
                 </div>
             `;
         } else if (key === 'ghi_chu') {
@@ -302,45 +448,62 @@ function applyManualPinChange() {
     const selectedIndex = document.getElementById('admin-pin-select').value;
     
     if (masterKey !== '161289' && masterKey !== '061189') {
-        alert("Master Key không hợp lệ! Vui lòng kiểm tra lại.");
+        customAlert("Master Key không hợp lệ! Vui lòng kiểm tra lại.");
         return;
     }
     
     localStorage.setItem('gtspec_pin_index', selectedIndex);
     localStorage.setItem('gtspec_start_date', Date.now()); // Khởi tạo lại chu kỳ 30 ngày
     
-    alert("Đã đổi vòng lặp Mã PIN thành công! Hệ thống sẽ tải lại trang để áp dụng.");
-    window.location.reload();
+    customAlert("Đã đổi vòng lặp Mã PIN thành công! Hệ thống sẽ tải lại trang để áp dụng.").then(() => {
+        window.location.reload();
+    });
 }
 
 // --- QUẢN LÝ TỪ ĐIỂN MÃ ID ---
-function renderAdminDict() {
+function renderAdminDict(filterText = "") {
     const tbody = document.getElementById('admin-dict-body');
     if (!tbody) return;
     
     let html = '';
-    const keys = Object.keys(tempDictionary).sort();
+    let keys = Object.keys(tempDictionary).sort();
+    
+    if (filterText) {
+        const lowerFilter = filterText.toLowerCase();
+        keys = keys.filter(k => k.toLowerCase().includes(lowerFilter) || tempDictionary[k].toLowerCase().includes(lowerFilter));
+    }
     
     if (keys.length === 0) {
-        html = '<tr><td colspan="3" class="no-data">Chưa có mã ID nào trong từ điển.</td></tr>';
+        html = '<tr><td colspan="3" class="no-data">Chưa có mã ID nào hoặc không tìm thấy.</td></tr>';
     } else {
         keys.forEach(k => {
             html += `<tr>
                 <td class="val-bold">${k}</td>
                 <td style="text-align: left;">${tempDictionary[k]}</td>
-                <td><button style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="deleteAdminDict('${k}')">🗑</button></td>
+                <td>
+                    <div style="display: flex; gap: 5px; justify-content: center;">
+                        <button style="background:#f39c12; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;" onclick="editAdminDict('${k}')" title="Sửa">✏️</button>
+                        <button style="background:var(--accent); color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;" onclick="deleteAdminDict('${k}')" title="Xóa">🗑</button>
+                    </div>
+                </td>
             </tr>`;
         });
     }
     tbody.innerHTML = html;
 }
 
-function addAdminDict() {
+function editAdminDict(prefix) {
+    document.getElementById('admin-dict-prefix').value = prefix;
+    document.getElementById('admin-dict-name').value = tempDictionary[prefix];
+    document.getElementById('admin-dict-prefix').focus();
+}
+
+async function addAdminDict() {
     const prefix = document.getElementById('admin-dict-prefix').value.trim().toUpperCase();
     const name = document.getElementById('admin-dict-name').value.trim();
     
     if (!prefix || !name) {
-        alert("Vui lòng điền đầy đủ Mã viết tắt và Tên Công ty!");
+        customAlert("Vui lòng điền đầy đủ Mã viết tắt và Tên Công ty!");
         return;
     }
     
@@ -351,19 +514,24 @@ function addAdminDict() {
     document.getElementById('admin-dict-prefix').value = '';
     document.getElementById('admin-dict-name').value = '';
     
-    renderAdminDict();
+    const searchInput = document.getElementById('admin-dict-search');
+    renderAdminDict(searchInput ? searchInput.value : "");
     if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
-    alert("Đã thêm/cập nhật từ điển thành công! Hãy bấm 'TẢI FILE DỮ LIỆU JS' của Air Cooler để lưu lại.");
+    
+    await syncToCloud(false);
 }
 
-function deleteAdminDict(prefix) {
-    if (confirm(`Bạn có chắc muốn xóa mã khách hàng: ${prefix}?`)) {
+async function deleteAdminDict(prefix) {
+    if (await customConfirm(`Bạn có chắc muốn xóa mã khách hàng: ${prefix}?`)) {
         delete tempDictionary[prefix];
         if (typeof customerDictionary !== 'undefined') {
             delete customerDictionary[prefix];
         }
-        renderAdminDict();
+        const searchInput = document.getElementById('admin-dict-search');
+        renderAdminDict(searchInput ? searchInput.value : "");
         if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
+        
+        await syncToCloud(false);
     }
 }
 
@@ -373,13 +541,23 @@ function setAdminTableFilter(filterVal) {
     
     // Update active class on buttons
     const btnStandard = document.getElementById('admin-filter-standard');
+    const btnSample = document.getElementById('admin-filter-sample');
+    const btnCustom = document.getElementById('admin-filter-custom');
     const btnAll = document.getElementById('admin-filter-all');
-    if (btnStandard && btnAll) {
+    
+    if (btnStandard && btnSample && btnAll) {
+        btnStandard.classList.remove('active');
+        btnSample.classList.remove('active');
+        if (btnCustom) btnCustom.classList.remove('active');
+        btnAll.classList.remove('active');
+        
         if (filterVal === 'standard') {
             btnStandard.classList.add('active');
-            btnAll.classList.remove('active');
+        } else if (filterVal === 'sample') {
+            btnSample.classList.add('active');
+        } else if (filterVal === 'custom') {
+            if (btnCustom) btnCustom.classList.add('active');
         } else {
-            btnStandard.classList.remove('active');
             btnAll.classList.add('active');
         }
     }
@@ -387,27 +565,28 @@ function setAdminTableFilter(filterVal) {
     renderAdminTable();
 }
 
-function toggleItemStandard(id, checked) {
+function toggleItemStandard(id, value) {
     const db = currentAdminDb === 'evap' ? tempEvapDb : tempCondDb;
     const item = db.find(i => i.id === id);
     if (item) {
-        item.is_standard = checked;
+        item.is_standard = value === 'custom' ? 'custom' : (value === 'true');
         
         // Cập nhật database toàn cục tương ứng
         if (currentAdminDb === 'evap') {
             if (typeof modelDatabase !== 'undefined') {
                 const globalItem = modelDatabase.find(i => i.id === id);
-                if (globalItem) globalItem.is_standard = checked;
+                if (globalItem) globalItem.is_standard = item.is_standard;
             }
         } else {
             if (typeof modelDatabaseCond !== 'undefined') {
                 const globalItem = modelDatabaseCond.find(i => i.id === id);
-                if (globalItem) globalItem.is_standard = checked;
+                if (globalItem) globalItem.is_standard = item.is_standard;
             }
         }
         
         // Load lại bảng
         renderAdminTable();
+        syncToCloud(false);
     }
 }
 
@@ -420,7 +599,11 @@ function renderAdminTable() {
     // Áp dụng bộ lọc
     let displayDb = db;
     if (currentAdminTableFilter === 'standard') {
-        displayDb = db.filter(item => item.is_standard !== false);
+        displayDb = db.filter(item => item.is_standard !== 'custom' && String(item.is_standard).toLowerCase() !== 'false');
+    } else if (currentAdminTableFilter === 'sample') {
+        displayDb = db.filter(item => item.is_standard !== 'custom' && String(item.is_standard).toLowerCase() === 'false');
+    } else if (currentAdminTableFilter === 'custom') {
+        displayDb = db.filter(item => item.is_standard === 'custom');
     }
     
     document.getElementById('admin-db-count').innerText = `(${displayDb.length})`;
@@ -449,7 +632,14 @@ function renderAdminTable() {
     } else {
         // Render từ mới nhất đến cũ nhất
         [...displayDb].reverse().forEach(item => {
-            let rowHtml = `<tr class="${item.is_standard === false ? 'non-standard-row' : ''}">
+            const isCustom = item.is_standard === 'custom';
+            const isStd = !isCustom && String(item.is_standard).toLowerCase() !== 'false';
+            
+            let rowClass = '';
+            if (isCustom) rowClass = 'custom-design-row';
+            else if (!isStd) rowClass = 'non-standard-row';
+            
+            let rowHtml = `<tr class="${rowClass}">
                 <td style="white-space: nowrap;">
                     <button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="editAdminModel('${item.id}')">✏ Sửa</button>
                     <button style="background:#0288d1; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="duplicateAdminModel('${item.id}')" title="Nhân bản Model">📑</button>
@@ -457,9 +647,25 @@ function renderAdminTable() {
                 </td>`;
             keys.forEach(k => {
                 if (k === 'is_standard') {
-                    const isChecked = item[k] !== false;
+                    const selectColor = isCustom ? '#7f8c8d' : (isStd ? '#1d6f42' : '#d35400');
                     rowHtml += `<td style="text-align: center;">
-                        <input type="checkbox" class="compare-cb" ${isChecked ? 'checked' : ''} onchange="toggleItemStandard('${item.id}', this.checked)">
+                        <select onchange="toggleItemStandard('${item.id}', this.value)" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; color: ${selectColor}; background: transparent; cursor: pointer; text-align: center;">
+                            <option value="true" ${isStd && !isCustom ? 'selected' : ''} style="color: #1d6f42;">Tiêu chuẩn</option>
+                            <option value="false" ${!isStd && !isCustom ? 'selected' : ''} style="color: #d35400;">Dàn mẫu</option>
+                            <option value="custom" ${isCustom ? 'selected' : ''} style="color: #7f8c8d;">Thiết kế riêng</option>
+                        </select>
+                    </td>`;
+                } else if (k === 'id') {
+                    // Tooltip Theo dõi (Audit Trail)
+                    const creatorText = item.createdBy ? `Tạo bởi: ${item.createdBy}` : 'Tạo bởi: Admin (Dữ liệu gốc)';
+                    const createdText = item.createdAt ? `&#10;Ngày tạo: ${formatDateTime(item.createdAt)}` : '';
+                    const updatedText = item.updatedAt ? `&#10;Cập nhật: ${formatDateTime(item.updatedAt)}` : '';
+                    const auditTrail = `${creatorText}${createdText}${updatedText}`;
+                    
+                    rowHtml += `<td class="val-id">
+                        <div class="id-container">
+                            <span class="id-text" title="${auditTrail}">${item[k]||"-"}</span>
+                        </div>
                     </td>`;
                 } else if (k === 'ghi_chu') {
                     if (item[k] && item[k].trim() !== '') {
@@ -493,10 +699,38 @@ function renderAdminStats(db) {
         if (i.loai_dan) { countLoaiDan[i.loai_dan] = (countLoaiDan[i.loai_dan] || 0) + 1; }
     });
     
+    // Tính toán Cloud Capacity
+    let totalRows = 0;
+    if (typeof modelDatabase !== 'undefined') totalRows += modelDatabase.length;
+    if (typeof modelDatabaseCond !== 'undefined') totalRows += modelDatabaseCond.length;
+    const MAX_ROWS = 5000;
+    const capacityPercent = Math.min((totalRows / MAX_ROWS) * 100, 100).toFixed(1);
+    
+    let barColor = 'var(--success, #4caf50)';
+    if (totalRows >= 4000) {
+        barColor = 'var(--danger, #f44336)';
+    } else if (totalRows >= 2000) {
+        barColor = 'var(--warning, #ffeb3b)';
+    }
+    
     let html = `
-        <div style="background: var(--primary); color: white; padding: 15px; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
+        <div style="background: var(--card); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; flex: 1; min-width: 250px;">
+            <div style="background: #e0e0e0; border-radius: 10px; height: 15px; width: 100%; overflow: hidden; margin-bottom: 5px;">
+                <div style="background: ${barColor}; height: 100%; width: ${capacityPercent}%; transition: width 0.5s ease-in-out;"></div>
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); display: flex; justify-content: flex-end; align-items: center; gap: 10px; font-weight: bold;">
+                <span id="inline-sync-status" style="display: flex; color: var(--success, #4caf50); font-size: 11px; align-items: center; gap: 5px;">
+                    ✅ Dữ liệu đã đồng bộ
+                </span>
+                <span>${capacityPercent}% / 100%</span>
+            </div>
+        </div>
+    `;
+    
+    html += `
+        <div style="background: var(--primary); color: white; padding: 15px; border-radius: 8px; flex: 1; min-width: 150px; text-align: center; display: flex; flex-direction: column; justify-content: center;">
             <div style="font-size: 24px; font-weight: bold;">${db.length}</div>
-            <div style="font-size: 12px; opacity: 0.9;">TỔNG SỐ MODEL</div>
+            <div style="font-size: 12px; opacity: 0.9;">TỔNG SỐ MODEL (TAB HIỆN TẠI)</div>
         </div>
     `;
     
@@ -522,16 +756,33 @@ function renderAdminStats(db) {
 }
 
 // --- XÓA MODEL ---
-function deleteAdminModel(id) {
-    if (!confirm(`Bạn có chắc chắn muốn xóa model có ID: ${id}?`)) return;
+async function deleteAdminModel(id) {
+    if (!(await customConfirm(`Bạn có chắc chắn muốn xóa model có ID: ${id}?`))) return;
+    
+    const role = sessionStorage.getItem('gtspec_role') ? sessionStorage.getItem('gtspec_role').trim().toLowerCase() : '';
+    const username = sessionStorage.getItem('gtspec_username');
     
     if (currentAdminDb === 'evap') {
+        const item = tempEvapDb.find(i => i.id === id);
+        if (!item) return;
+
+        if (role !== 'admin' && (role !== 'editor' || item.createdBy !== username)) {
+            customAlert("Bạn chỉ được phép xóa Model do chính bạn tạo ra!");
+            return;
+        }
         tempEvapDb = tempEvapDb.filter(i => i.id !== id);
         if (typeof modelDatabase !== 'undefined') {
             modelDatabase.length = 0;
             modelDatabase.push(...tempEvapDb);
         }
     } else {
+        const item = tempCondDb.find(i => i.id === id);
+        if (!item) return;
+
+        if (role !== 'admin' && (role !== 'editor' || item.createdBy !== username)) {
+            customAlert("Bạn chỉ được phép xóa Model do chính bạn tạo ra!");
+            return;
+        }
         tempCondDb = tempCondDb.filter(i => i.id !== id);
         if (typeof modelDatabaseCond !== 'undefined') {
             modelDatabaseCond.length = 0;
@@ -541,6 +792,8 @@ function deleteAdminModel(id) {
     renderAdminTable();
     if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
     if (editingModelId === id) resetAdminForm();
+    
+    syncToCloud(false);
 }
 
 // --- NHÂN BẢN MODEL ---
@@ -557,7 +810,12 @@ function duplicateAdminModel(id) {
         const el = document.getElementById(`admin_input_${k}`);
         if (el) {
             if (k === 'is_standard') {
-                el.checked = item[k] !== false;
+                if (item[k] === 'custom') {
+                    el.value = 'custom';
+                } else {
+                    const isStd = String(item[k]).toLowerCase() !== 'false';
+                    el.value = isStd.toString();
+                }
             } else {
                 el.value = item[k] || '';
             }
@@ -585,7 +843,17 @@ function editAdminModel(id) {
     if (!modelToEdit) return;
 
     editingModelId = id;
-    document.getElementById('admin-form-title').innerText = `ĐANG SỬA MODEL: ${modelToEdit.model} (ID: ${id})`;
+    
+    // Tóm tắt lịch sử
+    let historyText = "";
+    if (modelToEdit.createdBy) {
+        historyText = ` (Tạo bởi: ${modelToEdit.createdBy}`;
+        if (modelToEdit.updatedAt) historyText += ` - Cập nhật: ${formatDateTime(modelToEdit.updatedAt)}`;
+        else if (modelToEdit.createdAt) historyText += ` - Ngày tạo: ${formatDateTime(modelToEdit.createdAt)}`;
+        historyText += `)`;
+    }
+    
+    document.getElementById('admin-form-title').innerText = `ĐANG SỬA MODEL: ${modelToEdit.model} (ID: ${id})${historyText}`;
     document.getElementById('admin-form-title').style.color = 'var(--accent)';
     
     // Khóa ô ID lại để không cho sửa ID (ID là định danh duy nhất)
@@ -596,7 +864,12 @@ function editAdminModel(id) {
         const el = document.getElementById(`admin_input_${k}`);
         if (el) {
             if (k === 'is_standard') {
-                el.checked = modelToEdit[k] !== false;
+                if (modelToEdit[k] === 'custom') {
+                    el.value = 'custom';
+                } else {
+                    const isStd = String(modelToEdit[k]).toLowerCase() !== 'false';
+                    el.value = isStd.toString();
+                }
             } else {
                 el.value = modelToEdit[k] !== null && modelToEdit[k] !== undefined ? modelToEdit[k] : '';
             }
@@ -639,7 +912,7 @@ function resetAdminForm() {
         const el = document.getElementById(`admin_input_${k}`);
         if (el) {
             if (k === 'is_standard') {
-                el.checked = true;
+                el.value = "true";
             } else if (k === 'tieu_chuan' || k === 'delta_t') {
                 el.value = '';
                 el.readOnly = true;
@@ -696,7 +969,8 @@ function saveAdminModel() {
         if (!inputEl) return;
         
         if (k === 'is_standard') {
-            newModel[k] = inputEl.checked;
+            const selectVal = inputEl.value;
+            newModel[k] = selectVal === 'custom' ? 'custom' : (selectVal === "true");
             return;
         }
 
@@ -730,16 +1004,33 @@ function saveAdminModel() {
     });
 
     if (hasError) {
-        alert("LỖI NHẬP LIỆU ở các trường: " + errorFields.join(', ') + ".\n\n- MÃ ID và MODEL là bắt buộc, không được để trống.\n- Các ô Thông số kỹ thuật (như Công suất, Diện tích, Nhiệt độ...) bắt buộc phải nhập SỐ (có thể dùng dấu . cho số thập phân) hoặc ĐỂ TRỐNG.");
+        customAlert("LỖI NHẬP LIỆU ở các trường: " + errorFields.join(', ') + ".\n\n- MÃ ID và MODEL là bắt buộc, không được để trống.\n- Các ô Thông số kỹ thuật (như Công suất, Diện tích, Nhiệt độ...) bắt buộc phải nhập SỐ (có thể dùng dấu . cho số thập phân) hoặc ĐỂ TRỐNG.");
         return;
     }
+
+    const role = sessionStorage.getItem('gtspec_role') ? sessionStorage.getItem('gtspec_role').trim().toLowerCase() : '';
+    const username = sessionStorage.getItem('gtspec_username') || 'Unknown';
+    const currentTime = new Date().toISOString();
 
     if (currentAdminDb === 'evap') {
         if (editingModelId) {
             const idx = tempEvapDb.findIndex(i => i.id === editingModelId);
-            if (idx !== -1) tempEvapDb[idx] = newModel;
+            if (idx !== -1) {
+                // Kiểm tra quyền
+                if (role !== 'admin' && (role !== 'editor' || tempEvapDb[idx].createdBy !== username)) {
+                    customAlert("Bạn chỉ được phép sửa Model do chính bạn tạo ra!");
+                    return;
+                }
+                newModel.createdBy = tempEvapDb[idx].createdBy; // Giữ nguyên người tạo gốc
+                newModel.createdAt = tempEvapDb[idx].createdAt || currentTime;
+                newModel.updatedAt = currentTime;
+                tempEvapDb[idx] = newModel;
+            }
         } else {
-            if (tempEvapDb.some(i => i.id === newModel.id)) return alert("Mã ID này đã tồn tại!");
+            if (tempEvapDb.some(i => i.id === newModel.id)) { customAlert("Mã ID này đã tồn tại!"); return; }
+            newModel.createdBy = username; // Gán người tạo mới
+            newModel.createdAt = currentTime;
+            newModel.updatedAt = currentTime;
             tempEvapDb.push(newModel);
         }
         if (typeof modelDatabase !== 'undefined') {
@@ -749,9 +1040,21 @@ function saveAdminModel() {
     } else {
         if (editingModelId) {
             const idx = tempCondDb.findIndex(i => i.id === editingModelId);
-            if (idx !== -1) tempCondDb[idx] = newModel;
+            if (idx !== -1) {
+                if (role !== 'admin' && (role !== 'editor' || tempCondDb[idx].createdBy !== username)) {
+                    customAlert("Bạn chỉ được phép sửa Model do chính bạn tạo ra!");
+                    return;
+                }
+                newModel.createdBy = tempCondDb[idx].createdBy;
+                newModel.createdAt = tempCondDb[idx].createdAt || currentTime;
+                newModel.updatedAt = currentTime;
+                tempCondDb[idx] = newModel;
+            }
         } else {
-            if (tempCondDb.some(i => i.id === newModel.id)) return alert("Mã ID này đã tồn tại!");
+            if (tempCondDb.some(i => i.id === newModel.id)) { customAlert("Mã ID này đã tồn tại!"); return; }
+            newModel.createdBy = username;
+            newModel.createdAt = currentTime;
+            newModel.updatedAt = currentTime;
             tempCondDb.push(newModel);
         }
         if (typeof modelDatabaseCond !== 'undefined') {
@@ -762,9 +1065,11 @@ function saveAdminModel() {
 
     if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
 
-    alert(editingModelId ? "Đã cập nhật Model thành công!" : "Đã thêm Model mới thành công!");
     resetAdminForm();
     renderAdminTable();
+    
+    // ĐỒNG BỘ LÊN CLOUD
+    syncToCloud(false);
 }
 
 // --- XUẤT FILE DATA.JS / DATA_01.JS ---
@@ -837,7 +1142,7 @@ function exportExcel() {
 function importCSV() {
     const fileInput = document.getElementById('csv-upload');
     if (!fileInput || !fileInput.files.length) {
-        alert("Vui lòng chọn file CSV trước khi bấm Nhập CSV!");
+        customAlert("Vui lòng chọn file CSV trước khi bấm Nhập CSV!");
         return;
     }
     
@@ -851,7 +1156,7 @@ function importCSV() {
             // Does not handle commas inside quotes perfectly, but sufficient for standard GT SpecBoard exports
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             if (lines.length < 2) {
-                alert("File CSV không hợp lệ hoặc không có dữ liệu!");
+                customAlert("File CSV không hợp lệ hoặc không có dữ liệu!");
                 return;
             }
             
@@ -900,11 +1205,11 @@ function importCSV() {
             
             renderAdminTable();
             if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
-            alert(`Nhập CSV thành công! Đã thêm/cập nhật ${addedCount} Model.\nVui lòng kiểm tra lại bảng và bấm "TẢI FILE DỮ LIỆU JS MỚI" để lưu.`);
+            customAlert(`Nhập CSV thành công! Đã thêm/cập nhật ${addedCount} Model.\nVui lòng kiểm tra lại bảng và bấm "TẢI FILE DỮ LIỆU JS MỚI" để lưu.`);
             fileInput.value = ""; // Reset input
         } catch (error) {
             console.error(error);
-            alert("Đã xảy ra lỗi khi đọc file CSV. Vui lòng kiểm tra lại định dạng.");
+            customAlert("Đã xảy ra lỗi khi đọc file CSV. Vui lòng kiểm tra lại định dạng.");
         }
     };
     

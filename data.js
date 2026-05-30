@@ -1,5 +1,5 @@
 // TỆP DỮ LIỆU TỰ ĐỘNG SINH TỪ QUẢN TRỊ ADMIN
-const customerDictionary = {
+let customerDictionary = {
   "HT": "CÔNG TY TNHH HƯNG TRÍ",
   "TSBT": "CÔNG TY CP THỦY SẢN BẾN TRE",
   "ATKL": "A TIẾN - KHÁCH LẺ",
@@ -20,7 +20,7 @@ const customerDictionary = {
   "REC": "RECOM",
   "HL": "CÔNG TY HOÀNG LONG"
 };
-const modelDatabase = [
+let modelDatabase = [
   {"id":"HT290426","model":"TD-16BN-Z240A6101.4","loai_dan":"DÀN LẠNH","kw":13.2,"s_tdn":60.7,"tieu_chuan":4.6,"t_bayhoi":0,"t_phong":9,"delta_t":9,"van_hanh":"Tiết lưu nhiệt","moi_chat":"R507A","loai_ong":"D16 INOX (50X50)","loai_canh":"Nhôm","v_wind":3.3,"dk_quat":400,"sl_quat":2,"ghi_chu":"Cty Hưng Trí\nDàn lạnh kho mát\n*Yêu cầu:\nCông suất: 12kW / 1 bộ\nR507A, Te = 0, Tr = +9 độ\nTiết lưu nhiệt\nXả đá: Gió\nỐng Inox - Lá Nhôm Mg\nQuạt: Đức\n\nChọn tiêu chuẩn:\n-Tiêu chuẩn ống Inox-lá Nhôm-Tim 50 (-5/+2): 4.8 m2/kW\n-Tại điều kiện (0/+7) giảm 0.2 m2/kW : 4.6 m2/kW\n-Delta T=9K (0/+9) giảm 0.3 m2/kW: 4.3 m2/kW\n-Dàn nhỏ tăng: 0.3 m2/kW\n-->Chọn tiêu chuẩn = 4.6 m2/kW"},
   {"id":"HTP280426","model":"FCU-16BI-Z245A10141.7","loai_dan":"FCU","kw":16.8,"s_tdn":214.8,"tieu_chuan":12.8,"t_bayhoi":-2,"t_phong":8,"delta_t":10,"van_hanh":"Tiết lưu","moi_chat":"R404A","loai_ong":"D16 INOX (45X45)","loai_canh":"Inox 304","v_wind":2.4,"dk_quat":450,"sl_quat":2,"ghi_chu":"HTP\nFCU (khu vực sản xuất)\nCông suất yêu cầu: 16kW\nR404A / tiết lưu\nNhiệt độ bay hơi: -2\nNhiệt độ phòng +8 đến +10\nỐng inox / lá inox\nQuạt Đức\n\nChọn tiêu chuẩn:\nTiêu chuẩn FCU ống đồng 12.7 lá nhôm tại phòng +18 (delta T 10.5K): 2.4 m2/kW\nNhiệt độ phòng giảm từ +18 xuống +8:\n2 độ đầu không tăng tiêu chuẩn\n1 độ tiếp theo: +0.1\n5 độ tiếp: +1.0\n2 độ cuối: +0.5\nDàn chạy gas: -0.3\nTiêu chuẩn ống đồng 12.7 lá nhôm: 3.7\n=> tiêu chuẩn ống inox - lá inox: 3.7x3.25= ~12 m2/kW\nKIỂM TRA BẰNG UNILAD BÁO 19.3kW NÊN TĂNG TIÊU CHUẨN LÊN 12.8m2/kW"},
   {"id":"TSBT280426","model":"CD-16BM-M860W8323.7","loai_dan":"DÀN ĐÔNG GIÓ TT","kw":61,"s_tdn":439.3,"tieu_chuan":7.2,"t_bayhoi":-42,"t_phong":-35,"delta_t":7,"van_hanh":"Bơm dịch","moi_chat":"NH3","loai_ong":"D16 INOX (50X50)","loai_canh":"Nhôm","v_wind":3.4,"dk_quat":600,"sl_quat":8,"ghi_chu":"Cty Thủy Sản Bến Tre\nDàn đông gió thổi thẳng\n*Yêu cầu:\nCông suất: 60kW / 3 bộ\nNH3, Te = -42 / Tr = -35 độ\nBơm dịch\nỐng Inox - Lá Nhôm Mg\nXả đá: Nước\nQuạt: TQ\nKích thước phòng: W4400 x H2500\n\n*Thiết kế:\nTiêu chuẩn = 6.7 m2/kW (Te = -40 / Tr = -33 độ)\nTốc độ gió 3.4m/s\nGió thấp tăng tiêu chuẩn: +0.5 m2/kW\nChọn tiêu chuẩn = 7.2 m2/kW\nCá phi lê có ướp gia vị, cấp đông trần, chọn quạt 630 gió lớn quá thổi bay gia vị hết "},
