@@ -766,8 +766,8 @@ async function deleteAdminModel(id) {
         const item = tempEvapDb.find(i => i.id === id);
         if (!item) return;
 
-        if (role !== 'admin' && role !== 'editor') {
-            customAlert("Bạn không có quyền xóa Model!");
+        if (role !== 'admin' && (role !== 'editor' || item.createdBy !== username)) {
+            customAlert("Bạn chỉ được phép xóa Model do chính bạn tạo ra!");
             return;
         }
         tempEvapDb = tempEvapDb.filter(i => i.id !== id);
@@ -779,8 +779,8 @@ async function deleteAdminModel(id) {
         const item = tempCondDb.find(i => i.id === id);
         if (!item) return;
 
-        if (role !== 'admin' && role !== 'editor') {
-            customAlert("Bạn không có quyền xóa Model!");
+        if (role !== 'admin' && (role !== 'editor' || item.createdBy !== username)) {
+            customAlert("Bạn chỉ được phép xóa Model do chính bạn tạo ra!");
             return;
         }
         tempCondDb = tempCondDb.filter(i => i.id !== id);
@@ -1017,8 +1017,8 @@ function saveAdminModel() {
             const idx = tempEvapDb.findIndex(i => i.id === editingModelId);
             if (idx !== -1) {
                 // Kiểm tra quyền
-                if (role !== 'admin' && role !== 'editor') {
-                    customAlert("Bạn không có quyền sửa Model!");
+                if (role !== 'admin' && (role !== 'editor' || tempEvapDb[idx].createdBy !== username)) {
+                    customAlert("Bạn chỉ được phép sửa Model do chính bạn tạo ra!");
                     return;
                 }
                 newModel.createdBy = tempEvapDb[idx].createdBy; // Giữ nguyên người tạo gốc
@@ -1041,8 +1041,8 @@ function saveAdminModel() {
         if (editingModelId) {
             const idx = tempCondDb.findIndex(i => i.id === editingModelId);
             if (idx !== -1) {
-                if (role !== 'admin' && role !== 'editor') {
-                    customAlert("Bạn không có quyền sửa Model!");
+                if (role !== 'admin' && (role !== 'editor' || tempCondDb[idx].createdBy !== username)) {
+                    customAlert("Bạn chỉ được phép sửa Model do chính bạn tạo ra!");
                     return;
                 }
                 newModel.createdBy = tempCondDb[idx].createdBy;
