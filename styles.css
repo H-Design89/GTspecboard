@@ -278,6 +278,10 @@ body {
     margin-bottom: 15px;
 }
 
+.grid-filter-small {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
 .filter-highlight-evap {
     background: #e3f2fd;
     padding: 15px;
@@ -1056,4 +1060,103 @@ th[data-sort]:active {
         opacity: 1;
         transform: scale(1);
     }
+}
+
+/* CUSTOM MULTI-SELECT */
+.custom-multi-select {
+    position: relative;
+    user-select: none;
+    width: 100%;
+}
+
+.custom-multi-select-header {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--card);
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 19px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-multi-select-header:after {
+    content: '▼';
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-left: 10px;
+}
+
+.custom-multi-select-header.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+}
+
+.custom-multi-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-top: 4px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    z-index: 999;
+    display: none;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.custom-multi-select-options.show {
+    display: block;
+    animation: fadeInDown 0.2s ease-out;
+}
+
+.custom-multi-select-option {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.custom-multi-select-option:last-child {
+    border-bottom: none;
+}
+
+.custom-multi-select-option:hover {
+    background-color: var(--bg);
+}
+
+.custom-multi-select-option input[type="checkbox"] {
+    margin: 0;
+    margin-right: 10px;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+}
+
+[data-theme="dark"] .custom-multi-select-header,
+[data-theme="dark"] .custom-multi-select-options {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .custom-multi-select-option {
+    border-color: #334155;
+}
+
+[data-theme="dark"] .custom-multi-select-option:hover {
+    background-color: #1e293b;
 }

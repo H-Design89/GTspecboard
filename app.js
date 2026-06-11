@@ -7,8 +7,8 @@ let currentEvapRes = [];
 let currentCondRes = [];
 let sortCol = '';
 let sortAsc = true;
-let searchStandardFilterEvap = 'standard';
-let searchStandardFilterCond = 'standard';
+let searchStandardFilterEvap = 'all';
+let searchStandardFilterCond = 'all';
 
 // Hàm đóng/mở form Login
 function showLoginScreen() {
@@ -120,6 +120,8 @@ async function initApp() {
 
         // Khởi tạo dữ liệu filter
         if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
+        if (typeof performSearchEvap === 'function') performSearchEvap();
+        if (typeof performSearchCond === 'function') performSearchCond();
         
         // Ẩn Loading và Hiển thị App
         document.getElementById('loading-screen').style.display = 'none';
@@ -132,6 +134,8 @@ async function initApp() {
         document.getElementById('lock-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
         if (typeof populateAllDropdowns === 'function') populateAllDropdowns();
+        if (typeof performSearchEvap === 'function') performSearchEvap();
+        if (typeof performSearchCond === 'function') performSearchCond();
     }
 }
 
@@ -157,15 +161,26 @@ function setSearchStandardFilter(type, filterVal, btnEl) {
     markFilterChanged(type);
 }
 
-// Hàm đổi màu nút Quét khi có thay đổi bộ lọc
-function markFilterChanged(type) {
+let debounceTimerEvap;
+let debounceTimerCond;
+
+function triggerAutoSearch(type) {
     if (type === 'evap') {
-        const btn = document.getElementById('btn_scan_evap');
-        if (btn) btn.classList.remove('btn-scan-inactive');
+        clearTimeout(debounceTimerEvap);
+        debounceTimerEvap = setTimeout(() => {
+            if (typeof performSearchEvap === 'function') performSearchEvap();
+        }, 300);
     } else {
-        const btn = document.getElementById('btn_scan_cond');
-        if (btn) btn.classList.remove('btn-scan-inactive');
+        clearTimeout(debounceTimerCond);
+        debounceTimerCond = setTimeout(() => {
+            if (typeof performSearchCond === 'function') performSearchCond();
+        }, 300);
     }
+}
+
+// Thay thế logic đổi màu nút bằng logic tự động quét (Auto-Search)
+function markFilterChanged(type) {
+    triggerAutoSearch(type);
 }
 
 // Gắn event listener cho tất cả các input bộ lọc
@@ -175,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
     allFilters.forEach(el => {
         // Dựa vào ID để biết thuộc tab nào
         const type = el.id.includes('_c') ? 'cond' : 'evap';
-        el.addEventListener('input', () => markFilterChanged(type));
-        el.addEventListener('change', () => markFilterChanged(type));
+        el.addEventListener('input', () => triggerAutoSearch(type));
+        el.addEventListener('change', () => triggerAutoSearch(type));
     });
 });
 
@@ -222,6 +237,114 @@ function switchTab(tabId, element) {
 }
 
 // --- TẠO BỘ LỌC TỰ ĐỘNG ---
+function initMultiSelect(selectId, uniqueVals) {
+    const el = document.getElementById(selectId);
+    if (!el) return;
+    
+    // Remove old wrapper if exists
+    const oldWrapper = el.previousElementSibling;
+    if (oldWrapper && oldWrapper.classList.contains('custom-multi-select')) {
+        oldWrapper.remove();
+    }
+    
+    // Create wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-multi-select';
+    
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'custom-multi-select-header';
+    header.innerText = '-All-';
+    
+    // Create options container
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'custom-multi-select-options';
+    
+    // Populate options
+    let html = `<label class="custom-multi-select-option">
+        <input type="checkbox" value="ALL" checked> -All-
+    </label>`;
+    uniqueVals.forEach(val => {
+        html += `<label class="custom-multi-select-option">
+            <input type="checkbox" value="${val}"> ${val}
+        </label>`;
+    });
+    optionsContainer.innerHTML = html;
+    
+    wrapper.appendChild(header);
+    wrapper.appendChild(optionsContainer);
+    
+    // Replace select with wrapper
+    el.parentNode.insertBefore(wrapper, el);
+    el.style.display = 'none';
+    
+    // Logic for dropdown
+    header.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isShowing = optionsContainer.classList.contains('show');
+        document.querySelectorAll('.custom-multi-select-options').forEach(o => o.classList.remove('show'));
+        document.querySelectorAll('.custom-multi-select-header').forEach(h => h.classList.remove('active'));
+        if (!isShowing) {
+            optionsContainer.classList.add('show');
+            header.classList.add('active');
+        }
+    });
+    
+    // Logic for checkboxes
+    const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+    const allCb = checkboxes[0];
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (cb.value === "ALL") {
+                if (cb.checked) {
+                    checkboxes.forEach(c => { if(c !== allCb) c.checked = false; });
+                } else {
+                    cb.checked = true; // Prevent unchecking All if nothing else is checked
+                }
+            } else {
+                if (cb.checked) allCb.checked = false;
+                
+                // If nothing is checked, check ALL
+                const anyChecked = Array.from(checkboxes).some(c => c !== allCb && c.checked);
+                if (!anyChecked) allCb.checked = true;
+            }
+            
+            // Update header text
+            const checkedVals = Array.from(checkboxes).filter(c => c.checked && c.value !== "ALL").map(c => c.value);
+            if (allCb.checked) {
+                header.innerText = '-All-';
+            } else if (checkedVals.length === 1) {
+                header.innerText = checkedVals[0];
+            } else {
+                header.innerText = `${checkedVals.length} mục đã chọn`;
+            }
+            
+            // Trigger filter update
+            const type = selectId.includes('_c') ? 'cond' : 'evap';
+            markFilterChanged(type);
+        });
+    });
+    
+    // Global click to close
+    document.addEventListener('click', () => {
+        optionsContainer.classList.remove('show');
+        header.classList.remove('active');
+    });
+    optionsContainer.addEventListener('click', (e) => e.stopPropagation());
+    
+    // Save to element so we can get values later
+    el.getMultiValues = function() {
+        if (allCb.checked) return ["ALL"];
+        return Array.from(checkboxes).filter(c => c.checked && c.value !== "ALL").map(c => c.value);
+    };
+    
+    el.clearMultiValues = function() {
+        checkboxes.forEach(c => c.checked = false);
+        allCb.checked = true;
+        header.innerText = '-All-';
+    };
+}
+
 function populateAllDropdowns() {
     const extractUnique = (db, key) => [...new Set(db.map(item => item[key]))].filter(val => val).sort();
     
@@ -238,9 +361,8 @@ function populateAllDropdowns() {
         evapConfigs.forEach(cfg => {
             const el = document.getElementById(cfg.id);
             if (el) {
-                el.innerHTML = '<option value="ALL">-All-</option>';
                 const uniqueVals = extractUnique(modelDatabase, cfg.key);
-                uniqueVals.forEach(val => el.innerHTML += `<option value="${val}">${val}</option>`);
+                initMultiSelect(cfg.id, uniqueVals);
             }
         });
     }
@@ -257,37 +379,38 @@ function populateAllDropdowns() {
         condConfigs.forEach(cfg => {
             const el = document.getElementById(cfg.id);
             if (el) {
-                el.innerHTML = '<option value="ALL">-All-</option>';
                 const uniqueVals = extractUnique(modelDatabaseCond, cfg.key);
-                uniqueVals.forEach(val => el.innerHTML += `<option value="${val}">${val}</option>`);
+                initMultiSelect(cfg.id, uniqueVals);
             }
         });
     }
 
     // Dropdown cho Mã KH (Chữ cái đầu của ID)
-    const dlIdPrefix = document.getElementById('dl_id_prefix');
-    if (dlIdPrefix) {
-        let allIds = [];
-        if (typeof modelDatabase !== 'undefined') allIds = allIds.concat(modelDatabase.map(i => i.id));
-        if (typeof modelDatabaseCond !== 'undefined') allIds = allIds.concat(modelDatabaseCond.map(i => i.id));
-        
-        // Trích xuất các chữ cái đứng đầu
-        const prefixes = allIds.map(id => {
-            if (!id) return "";
-            const match = id.match(/^[a-zA-Z]+/);
-            return match ? match[0].toUpperCase() : "";
-        }).filter(p => p !== "");
-        
-        const uniquePrefixes = [...new Set(prefixes)].sort();
-        dlIdPrefix.innerHTML = '';
-        uniquePrefixes.forEach(p => {
-            let label = "";
-            if (typeof customerDictionary !== 'undefined' && customerDictionary[p]) {
-                label = ` - ${customerDictionary[p]}`;
-            }
-            dlIdPrefix.innerHTML += `<option value="${p}${label}">`;
-        });
-    }
+    const el_id_evap = document.getElementById('f_id_prefix');
+    const el_id_cond = document.getElementById('f_id_prefix_c');
+    
+    let allIds = [];
+    if (typeof modelDatabase !== 'undefined') allIds = allIds.concat(modelDatabase.map(i => i.id));
+    if (typeof modelDatabaseCond !== 'undefined') allIds = allIds.concat(modelDatabaseCond.map(i => i.id));
+    
+    // Trích xuất các chữ cái đứng đầu
+    const prefixes = allIds.map(id => {
+        if (!id) return "";
+        const match = id.match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : "";
+    }).filter(p => p !== "");
+    
+    const uniquePrefixes = [...new Set(prefixes)].sort();
+    const formattedPrefixes = uniquePrefixes.map(p => {
+        let label = "";
+        if (typeof customerDictionary !== 'undefined' && customerDictionary[p]) {
+            label = ` - ${customerDictionary[p]}`;
+        }
+        return `${p}${label}`;
+    });
+
+    if (el_id_evap) initMultiSelect('f_id_prefix', formattedPrefixes);
+    if (el_id_cond) initMultiSelect('f_id_prefix_c', formattedPrefixes);
 }
 
 // --- HÀM ĐỊNH DẠNG SỐ 1 CHỮ SỐ THẬP PHÂN ---
@@ -306,20 +429,26 @@ function renderTempValue(val, note) {
 function performSearchEvap() {
     if (typeof modelDatabase === 'undefined') return;
     
-    let f_id = (document.getElementById('f_id_prefix') ? document.getElementById('f_id_prefix').value : "").trim().toUpperCase();
-    if (f_id.includes(" - ")) f_id = f_id.split(" - ")[0].trim();
+    let f_id_arr = document.getElementById('f_id_prefix') && document.getElementById('f_id_prefix').getMultiValues ? document.getElementById('f_id_prefix').getMultiValues() : ["ALL"];
+    f_id_arr = f_id_arr.map(val => {
+        if (val === "ALL") return "ALL";
+        let str = val.trim().toUpperCase();
+        if (str.includes(" - ")) return str.split(" - ")[0].trim();
+        return str;
+    });
 
     const f = {
-        dan: document.getElementById('f_dan').value, 
-        vh: document.getElementById('f_vh').value, 
-        mc: document.getElementById('f_mc').value, 
-        ong: document.getElementById('f_ong').value, 
-        canh: document.getElementById('f_canh').value,
+        dan: document.getElementById('f_dan').getMultiValues ? document.getElementById('f_dan').getMultiValues() : ["ALL"], 
+        vh: document.getElementById('f_vh').getMultiValues ? document.getElementById('f_vh').getMultiValues() : ["ALL"], 
+        mc: document.getElementById('f_mc').getMultiValues ? document.getElementById('f_mc').getMultiValues() : ["ALL"], 
+        ong: document.getElementById('f_ong').getMultiValues ? document.getElementById('f_ong').getMultiValues() : ["ALL"], 
+        canh: document.getElementById('f_canh').getMultiValues ? document.getElementById('f_canh').getMultiValues() : ["ALL"],
         te: document.getElementById('f_te').value, 
         tr: document.getElementById('f_tr').value, 
         dt: document.getElementById('f_dt').value, 
         q_dk: document.getElementById('f_q_dk').value, 
-        id_prefix: f_id,
+        id_prefix: f_id_arr,
+        model: (document.getElementById('f_model') ? document.getElementById('f_model').value : "").trim().toUpperCase(),
         s: document.getElementById('f_s').value, 
         tc: document.getElementById('f_tc').value,
         kw: parseFloat(document.getElementById('f_kw').value), 
@@ -337,16 +466,17 @@ function performSearchEvap() {
             if (i.is_standard !== 'custom') return false;
         }
         
-        let ok = (f.dan==="ALL"||i.loai_dan===f.dan) && 
-                 (f.vh==="ALL"||i.van_hanh===f.vh) && 
-                 (f.mc==="ALL"||i.moi_chat===f.mc) && 
-                 (f.ong==="ALL"||i.loai_ong===f.ong) && 
-                 (f.canh==="ALL"||i.loai_canh===f.canh) &&
+        let ok = (f.dan.includes("ALL")||f.dan.includes(i.loai_dan)) && 
+                 (f.vh.includes("ALL")||f.vh.includes(i.van_hanh)) && 
+                 (f.mc.includes("ALL")||f.mc.includes(i.moi_chat)) && 
+                 (f.ong.includes("ALL")||f.ong.includes(i.loai_ong)) && 
+                 (f.canh.includes("ALL")||f.canh.includes(i.loai_canh)) &&
                  (f.te===""||i.t_bayhoi==f.te) && 
                  (f.tr===""||i.t_phong==f.tr) && 
                  (f.dt===""||i.delta_t==f.dt) && 
                  (f.q_dk===""||i.dk_quat==f.q_dk) && 
-                 (f.id_prefix===""||(i.id && i.id.toUpperCase().includes(f.id_prefix))) &&
+                 (f.id_prefix.includes("ALL")||f.id_prefix.some(prefix => i.id && i.id.toUpperCase().includes(prefix))) &&
+                 (f.model===""||(i.model && i.model.toUpperCase().includes(f.model))) &&
                  (f.s===""||i.s_tdn==f.s) && 
                  (f.tc===""||i.tieu_chuan==f.tc);
                  
@@ -408,31 +538,25 @@ function renderEvapTable() {
 }
 
 function clearFiltersEvap() {
-    document.getElementById('f_dan').value = "ALL";
-    document.getElementById('f_vh').value = "ALL";
-    document.getElementById('f_mc').value = "ALL";
-    document.getElementById('f_ong').value = "ALL";
-    document.getElementById('f_canh').value = "ALL";
+    ['f_dan', 'f_vh', 'f_mc', 'f_ong', 'f_canh', 'f_id_prefix'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.clearMultiValues) el.clearMultiValues();
+        else if (el) el.value = "ALL";
+    });
     
     document.getElementById('f_te').value = "";
     document.getElementById('f_tr').value = "";
     document.getElementById('f_dt').value = "";
     document.getElementById('f_q_dk').value = "";
-    document.getElementById('f_id_prefix').value = "";
+    if (document.getElementById('f_model')) document.getElementById('f_model').value = "";
     
     document.getElementById('f_kw').value = "";
     document.getElementById('f_tol').value = "10";
     document.getElementById('f_s').value = "";
     document.getElementById('f_tc').value = "";
     
-    setSearchStandardFilter('evap', 'standard', document.getElementById('f_std_evap_standard'));
-    
-    currentEvapRes = [];
-    document.getElementById('result-evap').innerHTML = `<tr><td colspan="12" class="no-data">Bấm "Quét Dữ Liệu" để bắt đầu...</td></tr>`;
-    
-    const countEl = document.getElementById('count_evap');
-    if (countEl) countEl.innerText = '0';
-    markFilterChanged('evap');
+    setSearchStandardFilter('evap', 'all', document.getElementById('f_std_evap_all'));
+    if (typeof performSearchEvap === 'function') performSearchEvap();
 }
 
 // --- TÌM KIẾM DÀN NGƯNG TỤ ---
@@ -442,19 +566,25 @@ function performSearchCond() {
         return;
     }
     
-    let f_id = (document.getElementById('f_id_prefix_c') ? document.getElementById('f_id_prefix_c').value : "").trim().toUpperCase();
-    if (f_id.includes(" - ")) f_id = f_id.split(" - ")[0].trim();
+    let f_id_arr = document.getElementById('f_id_prefix_c') && document.getElementById('f_id_prefix_c').getMultiValues ? document.getElementById('f_id_prefix_c').getMultiValues() : ["ALL"];
+    f_id_arr = f_id_arr.map(val => {
+        if (val === "ALL") return "ALL";
+        let str = val.trim().toUpperCase();
+        if (str.includes(" - ")) return str.split(" - ")[0].trim();
+        return str;
+    });
 
     const f = {
-        dan: document.getElementById('f_dan_c').value, 
-        mc: document.getElementById('f_mc_c').value, 
-        ong: document.getElementById('f_ong_c').value, 
-        canh: document.getElementById('f_canh_c').value,
+        dan: document.getElementById('f_dan_c').getMultiValues ? document.getElementById('f_dan_c').getMultiValues() : ["ALL"], 
+        mc: document.getElementById('f_mc_c').getMultiValues ? document.getElementById('f_mc_c').getMultiValues() : ["ALL"], 
+        ong: document.getElementById('f_ong_c').getMultiValues ? document.getElementById('f_ong_c').getMultiValues() : ["ALL"], 
+        canh: document.getElementById('f_canh_c').getMultiValues ? document.getElementById('f_canh_c').getMultiValues() : ["ALL"],
         te: document.getElementById('f_te_c').value, 
         tr: document.getElementById('f_tr_c').value, 
         tc_cond: document.getElementById('f_tc_cond').value, 
         twb: document.getElementById('f_twb').value,
-        id_prefix: f_id,
+        id_prefix: f_id_arr,
+        model: (document.getElementById('f_model_c') ? document.getElementById('f_model_c').value : "").trim().toUpperCase(),
         hp: document.getElementById('f_hp_c').value, 
         s: document.getElementById('f_s_c').value, 
         kw: parseFloat(document.getElementById('f_kw_c').value), 
@@ -472,15 +602,16 @@ function performSearchCond() {
             if (i.is_standard !== 'custom') return false;
         }
         
-        let ok = (f.dan==="ALL"||i.loai_dan===f.dan) && 
-                 (f.mc==="ALL"||i.moi_chat===f.mc) && 
-                 (f.ong==="ALL"||i.loai_ong===f.ong) && 
-                 (f.canh==="ALL"||i.loai_canh===f.canh) &&
+        let ok = (f.dan.includes("ALL")||f.dan.includes(i.loai_dan)) && 
+                 (f.mc.includes("ALL")||f.mc.includes(i.moi_chat)) && 
+                 (f.ong.includes("ALL")||f.ong.includes(i.loai_ong)) && 
+                 (f.canh.includes("ALL")||f.canh.includes(i.loai_canh)) &&
                  (f.te===""||i.t_bayhoi==f.te) && 
                  (f.tr===""||i.t_phong==f.tr) && 
                  (f.tc_cond===""||i.t_ngungtu==f.tc_cond) && 
                  (f.twb===""||i.t_wb==f.twb) && 
-                 (f.id_prefix===""||(i.id && i.id.toUpperCase().includes(f.id_prefix))) &&
+                 (f.id_prefix.includes("ALL")||f.id_prefix.some(prefix => i.id && i.id.toUpperCase().includes(prefix))) &&
+                 (f.model===""||(i.model && i.model.toUpperCase().includes(f.model))) &&
                  (f.hp===""||i.hp==f.hp) && 
                  (f.s===""||i.s_tdn==f.s);
                  
@@ -542,31 +673,26 @@ function renderCondTable() {
 }
 
 function clearFiltersCond() {
-    document.getElementById('f_dan_c').value = "ALL";
-    document.getElementById('f_mc_c').value = "ALL";
-    document.getElementById('f_ong_c').value = "ALL";
-    document.getElementById('f_canh_c').value = "ALL";
+    ['f_dan_c', 'f_mc_c', 'f_ong_c', 'f_canh_c', 'f_id_prefix_c'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.clearMultiValues) el.clearMultiValues();
+        else if (el) el.value = "ALL";
+    });
     
     document.getElementById('f_te_c').value = "";
     document.getElementById('f_tr_c').value = "";
     document.getElementById('f_tc_cond').value = "";
     document.getElementById('f_twb').value = "";
     document.getElementById('f_q_dk_c').value = "";
-    document.getElementById('f_id_prefix_c').value = "";
+    if (document.getElementById('f_model_c')) document.getElementById('f_model_c').value = "";
     
     document.getElementById('f_kw_c').value = "";
     document.getElementById('f_tol_c').value = "10";
     document.getElementById('f_hp_c').value = "";
     document.getElementById('f_s_c').value = "";
     
-    setSearchStandardFilter('cond', 'standard', document.getElementById('f_std_cond_standard'));
-    
-    currentCondRes = [];
-    document.getElementById('result-cond').innerHTML = `<tr><td colspan="15" class="no-data">Bấm "Quét Dữ Liệu" để bắt đầu...</td></tr>`;
-    
-    const countEl = document.getElementById('count_cond');
-    if (countEl) countEl.innerText = '0';
-    markFilterChanged('cond');
+    setSearchStandardFilter('cond', 'all', document.getElementById('f_std_cond_all'));
+    if (typeof performSearchCond === 'function') performSearchCond();
 }
 
 // --- MODAL GHI CHÚ ---
