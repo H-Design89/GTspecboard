@@ -103,11 +103,13 @@ async function syncToCloud(silent = false) {
             const normalized = {};
             keys.forEach(k => {
                 if (k === 'is_standard') {
-                    // Cố định giá trị true/false, mặc định là true nếu cũ, hỗ trợ "custom"
-                    if (item[k] === 'custom') {
+                    // Cố định giá trị true/false/custom, mặc định là 'custom'
+                    if (item[k] === undefined || item[k] === null || item[k] === '') {
+                        normalized[k] = 'custom';
+                    } else if (item[k] === 'custom') {
                         normalized[k] = 'custom';
                     } else {
-                        normalized[k] = item[k] !== undefined ? (String(item[k]).toLowerCase() !== 'false') : true;
+                        normalized[k] = (String(item[k]).toLowerCase() !== 'false');
                     }
                 } else {
                     normalized[k] = item[k] !== undefined && item[k] !== null ? item[k] : "";
@@ -243,9 +245,9 @@ function renderAdminForm() {
                 <div class="input-group" style="order: 98;">
                     <label style="font-weight: bold;">${labelText}:</label>
                     <select id="admin_input_is_standard" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: white;">
+                        <option value="custom">Thiết kế riêng</option>
                         <option value="true">Tiêu chuẩn</option>
                         <option value="false">Dàn mẫu</option>
-                        <option value="custom">Thiết kế riêng</option>
                     </select>
                 </div>
             `;
@@ -650,9 +652,9 @@ function renderAdminTable() {
                     const selectColor = isCustom ? '#7f8c8d' : (isStd ? '#1d6f42' : '#d35400');
                     rowHtml += `<td style="text-align: center;">
                         <select onchange="toggleItemStandard('${item.id}', this.value)" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; color: ${selectColor}; background: transparent; cursor: pointer; text-align: center;">
+                            <option value="custom" ${isCustom ? 'selected' : ''} style="color: #7f8c8d;">Thiết kế riêng</option>
                             <option value="true" ${isStd && !isCustom ? 'selected' : ''} style="color: #1d6f42;">Tiêu chuẩn</option>
                             <option value="false" ${!isStd && !isCustom ? 'selected' : ''} style="color: #d35400;">Dàn mẫu</option>
-                            <option value="custom" ${isCustom ? 'selected' : ''} style="color: #7f8c8d;">Thiết kế riêng</option>
                         </select>
                     </td>`;
                 } else if (k === 'id') {
@@ -912,7 +914,7 @@ function resetAdminForm() {
         const el = document.getElementById(`admin_input_${k}`);
         if (el) {
             if (k === 'is_standard') {
-                el.value = "true";
+                el.value = "custom";
             } else if (k === 'tieu_chuan' || k === 'delta_t') {
                 el.value = '';
                 el.readOnly = true;
