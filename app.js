@@ -448,6 +448,7 @@ function performSearchEvap() {
         dt: document.getElementById('f_dt').value, 
         q_dk: document.getElementById('f_q_dk').value, 
         id_prefix: f_id_arr,
+        full_id: (document.getElementById('f_full_id') ? document.getElementById('f_full_id').value : "").trim().toUpperCase(),
         model: (document.getElementById('f_model') ? document.getElementById('f_model').value : "").trim().toUpperCase(),
         s: document.getElementById('f_s').value, 
         tc: document.getElementById('f_tc').value,
@@ -476,6 +477,7 @@ function performSearchEvap() {
                  (f.dt===""||i.delta_t==f.dt) && 
                  (f.q_dk===""||i.dk_quat==f.q_dk) && 
                  (f.id_prefix.includes("ALL")||f.id_prefix.some(prefix => i.id && i.id.toUpperCase().includes(prefix))) &&
+                 (f.full_id===""||(i.id && i.id.toUpperCase().includes(f.full_id))) &&
                  (f.model===""||(i.model && i.model.toUpperCase().includes(f.model))) &&
                  (f.s===""||i.s_tdn==f.s) && 
                  (f.tc===""||i.tieu_chuan==f.tc);
@@ -548,6 +550,7 @@ function clearFiltersEvap() {
     document.getElementById('f_tr').value = "";
     document.getElementById('f_dt').value = "";
     document.getElementById('f_q_dk').value = "";
+    if (document.getElementById('f_full_id')) document.getElementById('f_full_id').value = "";
     if (document.getElementById('f_model')) document.getElementById('f_model').value = "";
     
     document.getElementById('f_kw').value = "";
@@ -584,6 +587,7 @@ function performSearchCond() {
         tc_cond: document.getElementById('f_tc_cond').value, 
         twb: document.getElementById('f_twb').value,
         id_prefix: f_id_arr,
+        full_id: (document.getElementById('f_full_id_c') ? document.getElementById('f_full_id_c').value : "").trim().toUpperCase(),
         model: (document.getElementById('f_model_c') ? document.getElementById('f_model_c').value : "").trim().toUpperCase(),
         hp: document.getElementById('f_hp_c').value, 
         s: document.getElementById('f_s_c').value, 
@@ -611,6 +615,7 @@ function performSearchCond() {
                  (f.tc_cond===""||i.t_ngungtu==f.tc_cond) && 
                  (f.twb===""||i.t_wb==f.twb) && 
                  (f.id_prefix.includes("ALL")||f.id_prefix.some(prefix => i.id && i.id.toUpperCase().includes(prefix))) &&
+                 (f.full_id===""||(i.id && i.id.toUpperCase().includes(f.full_id))) &&
                  (f.model===""||(i.model && i.model.toUpperCase().includes(f.model))) &&
                  (f.hp===""||i.hp==f.hp) && 
                  (f.s===""||i.s_tdn==f.s);
@@ -684,6 +689,7 @@ function clearFiltersCond() {
     document.getElementById('f_tc_cond').value = "";
     document.getElementById('f_twb').value = "";
     document.getElementById('f_q_dk_c').value = "";
+    if (document.getElementById('f_full_id_c')) document.getElementById('f_full_id_c').value = "";
     if (document.getElementById('f_model_c')) document.getElementById('f_model_c').value = "";
     
     document.getElementById('f_kw_c').value = "";
